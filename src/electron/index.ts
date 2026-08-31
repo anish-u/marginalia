@@ -3,6 +3,8 @@ import { app, BrowserWindow } from 'electron';
 import { createMainWindow } from '@main/windows';
 import { installContentSecurityPolicy } from '@main/security';
 import { registerIpcHandlers } from '@main/ipc';
+import { vaultManager } from '@main/ipc/vault';
+import { broadcastNotesChanged } from '@main/ipc/notes';
 import { installApplicationMenu } from '@main/menu';
 import { createTray } from '@main/tray';
 
@@ -15,12 +17,26 @@ if (require('electron-squirrel-startup')) {
 
 // This method will be called when Electron has finished initialization and is
 // ready to create browser windows. Some APIs can only be used after this event.
-app.on('ready', () => {
+app.on('ready', async () => {
   installContentSecurityPolicy();
   registerIpcHandlers();
+  // Restore the last-active vault (best-effort) before the launcher appears, so
+  // the main window's `getActiveVault()` picks it up and shows its notes rather
+  // than the empty state. `restore()` silently yields `null` when there's no
+  // saved pointer or the folder is no longer a readable vault — no broadcast is
+  // needed on boot since no window has subscribed yet.
+  await vaultManager.restore();
   installApplicationMenu();
   createTray();
   createMainWindow();
+});
+
+// Refresh notes when a window regains focus. The on-disk watcher catches most
+// external changes, but `fs.watch` can miss events (especially on macOS), so a
+// focus-time re-list is a cheap belt-and-braces: if the user deleted note files
+// in Finder and switched back to the app, the list updates immediately.
+app.on('browser-window-focus', () => {
+  broadcastNotesChanged();
 });
 
 // Quit when all windows are closed, except on macOS. There, it's common for

@@ -7,10 +7,19 @@ import type { MarginaliaApi } from '@shared/ipc';
  * default DOM lib, so we declare only what `ResourceNoteView` touches:
  *   - `executeJavaScript` to read the guest page's current text selection
  *   - `getURL` to record where a clipped highlight came from
+ *   - navigation: `goBack`/`goForward`/`reload`/`stop`/`loadURL` and the
+ *     `canGoBack`/`canGoForward` predicates that drive the nav toolbar
  */
 export interface WebviewElement extends HTMLElement {
   executeJavaScript(code: string, userGesture?: boolean): Promise<unknown>;
   getURL(): string;
+  goBack(): void;
+  goForward(): void;
+  reload(): void;
+  stop(): void;
+  loadURL(url: string): Promise<void>;
+  canGoBack(): boolean;
+  canGoForward(): boolean;
 }
 
 /**

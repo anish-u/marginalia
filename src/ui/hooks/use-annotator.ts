@@ -17,7 +17,9 @@ import type { ClipResult, Highlight } from '@shared/highlight';
  * Returns:
  *  - `webviewRef` — attach to the `<webview>` element.
  *  - `ready` — true once the annotator has been injected into the current page.
- *  - `paint(list)` — re-paint the given highlights onto the page.
+ *  - `paint(list)` — re-paint the given highlights onto the page; resolves to
+ *    the ids that were located/painted (the rest couldn't be re-anchored, so
+ *    the view can flag them — Req 6.6). Empty when the guest isn't ready.
  *  - `scrollTo(id)` — scroll the page to a highlight and flash it.
  *  - `clip()` — clip the current selection, returning a `ClipResult` (or null).
  */
@@ -46,16 +48,21 @@ export function useAnnotator() {
     };
   }, []);
 
-  const paint = useCallback((list: Highlight[]) => {
+  const paint = useCallback(async (list: Highlight[]): Promise<string[]> => {
     const webview = webviewRef.current;
-    if (!webview) return;
-    webview
-      .executeJavaScript(
+    if (!webview) return [];
+    try {
+      // The guest returns `{ painted: id[] }` (the anchors it could locate).
+      // If the guest isn't ready yet the `&&` short-circuits to a falsy value;
+      // the next dom-ready repaints, so we just report nothing found for now.
+      const result = (await webview.executeJavaScript(
         `window.__marginalia && window.__marginalia.paint(${JSON.stringify(list)})`,
-      )
-      .catch(() => {
-        /* guest not ready yet; next dom-ready will repaint */
-      });
+      )) as { painted?: string[] } | false | null | undefined;
+      return result && Array.isArray(result.painted) ? result.painted : [];
+    } catch {
+      /* guest not ready yet; next dom-ready will repaint */
+      return [];
+    }
   }, []);
 
   const scrollTo = useCallback((id: string) => {

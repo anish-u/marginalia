@@ -1,5 +1,7 @@
 import { registerAppInfoHandlers } from './app-info';
+import { registerNotesHandlers } from './notes';
 import { registerThemeHandlers } from './theme';
+import { registerVaultHandlers } from './vault';
 import { registerWindowHandlers } from './windows';
 
 /**
@@ -13,6 +15,8 @@ export const registerIpcHandlers = (): void => {
   registerAppInfoHandlers();
   registerWindowHandlers();
   registerThemeHandlers();
+  registerVaultHandlers();
+  registerNotesHandlers();
   // registerSettingsHandlers();
   // registerFileHandlers();
 };

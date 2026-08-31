@@ -1,0 +1,646 @@
+{
+  "pbtResults": {
+    "4.4 Write property test for failed writes leaving the prior file byte-unchanged": {
+      "status": "passed",
+      "lastRunTimestamp": 1788154215156
+    }
+  },
+  "executionHistory": {
+    "1.1 Add Vitest + fast-check and a `test` script to package.json": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152217959
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152227977
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152683831
+      }
+    ],
+    "1.2 Create shared resource-note types (`src/shared/resource-note.ts`)": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152217990
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152230699
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152686955
+      }
+    ],
+    "1.3 Write unit test asserting the resource union is closed and exhaustive": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152218023
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152690360
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152905853
+      }
+    ],
+    "2.1 Implement `note-file.ts` serialize/parse (`src/electron/vault/note-file.ts`)": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152218070
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152693498
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152909037
+      }
+    ],
+    "2.2 Write the round-trip property test for `note-file.ts`": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152218098
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152915491
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788153680394
+      }
+    ],
+    "2.3 Write property test for unrecognized resource type": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152218129
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152918256
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788153683165
+      }
+    ],
+    "3. Checkpoint - core serialization proven": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152218157
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788153693207
+      }
+    ],
+    "4.1 Implement `note-store.ts` write with atomic commit, timestamps, default title, and path-traversal guard (`src/electron/vault/note-store.ts`)": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152218184
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788153697429
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788153875132
+      }
+    ],
+    "4.2 Write property test for the path-traversal safety guard": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152218216
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788154104468
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788154376782
+      }
+    ],
+    "4.3 Write property tests for write timestamps, in-place overwrite, and default title": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152218246
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788154107691
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788154379882
+      }
+    ],
+    "4.4 Write property test for failed writes leaving the prior file byte-unchanged": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152218275
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788154111122
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788154384523
+      }
+    ],
+    "4.5 Implement `note-store.ts` read and list with fault isolation": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152218319
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788153891930
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788154088112
+      }
+    ],
+    "4.6 Write property tests for listing order and per-file fault isolation": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152218347
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788154396020
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788154588186
+      }
+    ],
+    "5.1 Implement `vault-manager.ts` marker recognition and folder designation (`src/electron/vault/vault-manager.ts`)": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152218377
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788153700489
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788153878730
+      }
+    ],
+    "5.2 Write property tests for vault designate/recognize and open semantics": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152218406
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788153898028
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788154094543
+      }
+    ],
+    "5.3 Implement `VaultManager` create/open/getActive/restore with dialog and last-active persistence": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152218435
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788153894902
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788154091377
+      }
+    ],
+    "5.4 Write example tests for dialog cancel, adopt-existing-vault, and restore": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152218459
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788154399358
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788154591327
+      }
+    ],
+    "6. Checkpoint - persistence layer complete": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152218487
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788156390874
+      }
+    ],
+    "7.1 Extend the IPC channel enum (`src/electron/ipc-channels.ts`)": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152218515
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152697502
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152911914
+      }
+    ],
+    "7.2 Extend the shared API contract (`src/shared/ipc.ts`)": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152218545
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152921094
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788153686058
+      }
+    ],
+    "7.3 Implement the vault IPC handlers with VaultChanged fan-out (`src/electron/ipc/vault.ts`)": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152218585
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788154405363
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788154594805
+      }
+    ],
+    "7.4 Implement the notes IPC handlers (`src/electron/ipc/notes.ts`)": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152218618
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788154408614
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788155131367
+      }
+    ],
+    "7.5 Write example test for save with no active vault": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152218647
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788155138138
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788155295471
+      }
+    ],
+    "7.6 Register the new handler groups (`src/electron/ipc/index.ts`)": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152218675
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788155142127
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788155298925
+      }
+    ],
+    "7.7 Implement the preload bridge methods and restore-on-boot (`src/electron/preload.ts`, `src/electron/index.ts`)": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152218698
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788155303387
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788155506327
+      }
+    ],
+    "8.1 Add the renderer-side prose conversion module (`src/ui/lib/note-markdown.ts`)": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152218727
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152925412
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788153689077
+      }
+    ],
+    "8.2 Write unit tests for the highlightQuote directive mapping": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152218757
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788153705289
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788153882111
+      }
+    ],
+    "9.1 Build the notes-list components (`src/ui/components/notes/`)": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152218786
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788155306679
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788155509409
+      }
+    ],
+    "9.2 Host the notes list in MainView and subscribe to vault changes (`src/ui/views/MainView.tsx`)": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152218816
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788155525249
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788155770351
+      }
+    ],
+    "9.3 Write RTL + jsdom tests for the notes-list UI states": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152218846
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788155790446
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788156042399
+      }
+    ],
+    "10.1 Accept an existing note id when opening a resource-note window (`src/electron/windows/resource-note.ts`)": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152218876
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788154975762
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788155134436
+      }
+    ],
+    "10.2 Load an existing note and add debounced autosave (`src/ui/views/ResourceNoteView.tsx`)": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152218899
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788155528638
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788155773559
+      }
+    ],
+    "10.3 Indicate highlights that cannot be re-anchored (`src/ui/views/ResourceNoteView.tsx`, `src/ui/components/resource-note/HighlightsIndex.tsx`)": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152218930
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788155787268
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788156039012
+      }
+    ],
+    "10.4 Write integration examples for restored-highlight scroll and not-found indication": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152218961
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788156045794
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788156170701
+      }
+    ],
+    "11. Final checkpoint - verify the whole feature": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152218996
+      },
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788156394132
+      }
+    ],
+    "1. Set up test tooling and shared persistence types": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788152905933
+      }
+    ],
+    "2. Implement and verify the pure Note_File serialization (round-trip first)": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788153683217
+      }
+    ],
+    "8. Implement Tiptap ↔ Markdown conversion in the renderer": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788153882149
+      }
+    ],
+    "4. Implement the Note_Store (read/write/list against a real folder)": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788154588244
+      }
+    ],
+    "5. Implement the Vault_Manager (create/open/recognize/persist active vault)": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788154591392
+      }
+    ],
+    "7. Wire persistence through IPC and the preload bridge": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788155506379
+      }
+    ],
+    "9. Implement the notes-list UI in the main window": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788156042440
+      }
+    ],
+    "10. Load, autosave, and re-anchor in the resource-note window": [
+      {
+        "executionId": "f1ba3b1d-ae6a-4611-90f8-1dff774a6cf8",
+        "chatSessionId": "sess_5f9cdf3f-5e32-428a-8339-3873d2464a48",
+        "timestamp": 1788156170738
+      }
+    ]
+  }
+}

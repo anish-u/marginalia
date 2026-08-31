@@ -1,10 +1,18 @@
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { FileText, Globe, Highlighter } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  FileText,
+  Globe,
+  Highlighter,
+  RotateCw,
+} from 'lucide-react';
 import { useSearchParams } from 'react-router';
 import type { PanelImperativeHandle } from 'react-resizable-panels';
 
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   ResizableHandle,
   ResizablePanel,
@@ -14,6 +22,8 @@ import { CollapsedRail } from '@ui/components/resource-note/CollapsedRail';
 import { HighlightsIndex } from '@ui/components/resource-note/HighlightsIndex';
 import { NoteEditor, type NoteEditorHandle } from '@ui/components/resource-note/NoteEditor';
 import { useAnnotator } from '@ui/hooks/use-annotator';
+import { useWebviewNav } from '@ui/hooks/use-webview-nav';
+import { docToMarkdown, markdownToDoc } from '@ui/lib/note-markdown';
 import type { Highlight } from '@shared/highlight';
 
 /** Fallback site loaded when no `?url=` is supplied. */
@@ -41,7 +51,15 @@ const makeId = (): string =>
  */
 export const ResourceNoteView: FC = () => {
   const [params] = useSearchParams();
-  const url = params.get('url') ?? DEFAULT_URL;
+  // `noteId` opens an existing note (load its resource url + prose); `url`
+  // seeds a fresh note. When opening by id the resource url comes from the
+  // loaded note, so `?url=` may be absent.
+  const noteId = params.get('noteId');
+  const urlParam = params.get('url');
+  // Optional initial title chosen in the launcher's "New Resource Note" dialog.
+  // Only meaningful for a fresh note; an existing note's title comes from the
+  // loaded file (the load effect overwrites this).
+  const titleParam = params.get('title');
 
   // Webview ↔ guest-annotator glue: inject, paint, scroll, clip, ready state.
   const { webviewRef, ready, paint, scrollTo, clip: clipSelection } =
@@ -49,8 +67,62 @@ export const ResourceNoteView: FC = () => {
   const editorRef = useRef<NoteEditorHandle | null>(null);
 
   const [dragging, setDragging] = useState(false);
-  const [title, setTitle] = useState('');
+  // Seed the title from the launcher dialog (fresh note); a loaded note
+  // overwrites it once `readNote` resolves.
+  const [title, setTitle] = useState(() =>
+    !noteId && titleParam ? titleParam : '',
+  );
   const [highlights, setHighlights] = useState<Highlight[]>([]);
+  // Ids of highlights whose text-quote anchor couldn't be located on the live
+  // page after the last paint. They stay in `highlights` (and the note prose) —
+  // this set only drives the "not found on page" indicator (Req 6.6).
+  const [unresolvedIds, setUnresolvedIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+
+  // The resource URL that drives the <webview src>. For a fresh note it's the
+  // `?url=` param (or the default); for a loaded note it's overwritten with the
+  // note's stored resource url once `readNote` resolves.
+  const [url, setUrl] = useState(urlParam ?? DEFAULT_URL);
+
+  // Webview navigation state + controls (back/forward/reload + address bar).
+  const {
+    currentUrl,
+    canGoBack,
+    canGoForward,
+    loading: webviewLoading,
+    goBack,
+    goForward,
+    reload,
+    navigate,
+  } = useWebviewNav(webviewRef, url);
+  // The address-bar draft: seeded from the live URL, editable while typing.
+  const [addressDraft, setAddressDraft] = useState(url);
+  const [addressFocused, setAddressFocused] = useState(false);
+  // Reflect the live URL into the address bar unless the user is editing it.
+  useEffect(() => {
+    if (!addressFocused) setAddressDraft(currentUrl);
+  }, [currentUrl, addressFocused]);
+
+  // Note identity + persisted timestamps. `id` is null until a fresh note is
+  // first saved (then `makeId()` assigns it once and it becomes the filename
+  // stem); an existing note carries its id from load. `createdAt`/`modifiedAt`
+  // are whatever the store last returned. These live in refs (not state)
+  // because they're read inside the debounced save without needing to re-run
+  // effects when they change.
+  const noteIdRef = useRef<string | null>(noteId);
+  const createdAtRef = useRef<number | null>(null);
+  const modifiedAtRef = useRef<number | null>(null);
+
+  // Guards the load so a fresh note (or a note being hydrated) doesn't autosave
+  // before/while it's being populated. Autosave only runs after load settles.
+  const loadedRef = useRef(false);
+
+  // Subtle save status for the header, so a failed write (e.g. no active vault)
+  // is visible without crashing or losing in-memory state.
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>(
+    'idle',
+  );
 
   // Collapse handling: each pane is collapsible, and when a pane collapses we
   // swap its content for a thin rail. We hold imperative refs to expand a pane
@@ -74,9 +146,181 @@ export const ResourceNoteView: FC = () => {
   }, [title]);
 
   // Re-paint whenever the highlight set changes (or the page becomes ready).
+  // Loaded highlights flow through this same effect, so restoring a note re-
+  // anchors its clips on the live page and clicking one scrolls to it (Req 6.5).
+  // `paint` reports which ids it located; the rest couldn't be re-anchored, so
+  // we flag them in the index without dropping them from the note (Req 6.6).
   useEffect(() => {
-    if (ready) paint(highlights);
+    if (!ready) return;
+    let cancelled = false;
+    void (async () => {
+      const painted = await paint(highlights);
+      if (cancelled) return;
+      const paintedSet = new Set(painted);
+      setUnresolvedIds(
+        new Set(
+          highlights.filter((h) => !paintedSet.has(h.id)).map((h) => h.id),
+        ),
+      );
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [ready, highlights, paint]);
+
+  // --- Load an existing note on mount (Req 6.3) -------------------------------
+  // If `noteId` is present, pull the note from the active vault: set the title,
+  // drive the <webview src> from the stored resource url, hydrate the editor
+  // from the prose Markdown, and restore the highlight anchors. On failure we
+  // fall back to an empty fresh note rather than crashing.
+  useEffect(() => {
+    if (!noteId) {
+      // Fresh note: nothing to load; enable autosave immediately.
+      loadedRef.current = true;
+      return;
+    }
+
+    let cancelled = false;
+    void (async () => {
+      const result = await window.marginalia.readNote(noteId);
+      if (cancelled) return;
+
+      if (result.ok) {
+        const note = result.value;
+        noteIdRef.current = note.id;
+        createdAtRef.current = note.createdAt;
+        modifiedAtRef.current = note.modifiedAt;
+        setTitle(note.title);
+        // Only website-link resources carry a url today; other (reserved)
+        // variants leave the webview on its default.
+        if (note.resource.type === 'website-link') setUrl(note.resource.url);
+        setHighlights(note.content.highlights);
+        // Hydrate the editor. `emitUpdate: false` so this programmatic load
+        // isn't mistaken for a user edit (which would trigger an autosave).
+        editorRef.current?.setContent(
+          markdownToDoc(note.content.prose, note.content.highlights),
+          false,
+        );
+        setSaveState('saved');
+      } else {
+        // Couldn't read it (missing / unreadable / no vault). Keep the empty
+        // note so the user can still work; surface the failure subtly.
+        console.warn(
+          `Failed to load note ${noteId}: ${result.error.code} — ${result.error.message}`,
+        );
+        setSaveState('error');
+      }
+
+      // Whether load succeeded or failed, autosave may now run for edits the
+      // user makes from here.
+      loadedRef.current = true;
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // Load runs once for the id this window was opened with.
+  }, [noteId]);
+
+  // --- Adopt a new id if this note is renamed elsewhere -----------------------
+  // If the note open in this window is renamed from the launcher, its file moves
+  // to a new id. The main process broadcasts NotesChanged with { oldId, newId };
+  // when oldId matches the id we're currently bound to, adopt newId so our next
+  // autosave writes the renamed file instead of recreating the old one. We also
+  // sync the title to match. Guarded by a ref check so unrelated broadcasts and
+  // our own renames don't disturb this window.
+  useEffect(() => {
+    return window.marginalia.onNotesChanged((rename) => {
+      if (!rename) return;
+      if (noteIdRef.current !== rename.oldId) return;
+      noteIdRef.current = rename.newId;
+      // Re-read so the heading reflects the new title without marking dirty.
+      void (async () => {
+        const result = await window.marginalia.readNote(rename.newId);
+        if (result.ok) setTitle(result.value.title);
+      })();
+    });
+  }, []);
+
+  // --- Debounced autosave (~800ms idle, Req 5.1/5.4) --------------------------
+  // Title edits, editor changes, and highlight-set changes mark the note dirty;
+  // after ~800ms of no further changes we persist. A fresh note generates its
+  // id once, on first save (reusing `makeId`); the id becomes the filename
+  // stem. The store owns timestamps — we store whatever `writeNote` returns.
+  // The write is async in the main process, so it never blocks typing.
+  const AUTOSAVE_DELAY_MS = 800;
+  const saveTimerRef = useRef<number | null>(null);
+  // A monotonically bumped counter: changing any tracked input bumps it, which
+  // (re)arms the debounce. Kept in state so the effect below re-runs on change.
+  const [dirtyTick, setDirtyTick] = useState(0);
+  const markDirty = useCallback(() => setDirtyTick((n) => n + 1), []);
+
+  const save = useCallback(async () => {
+    const editorJson = editorRef.current?.getJSON();
+    if (!editorJson) return; // editor not mounted yet
+
+    // Assign an id once for a fresh note; it becomes the filename stem. Derive
+    // it from the title so the on-disk file is recognizable (e.g.
+    // `my-research-notes.md`). If there's no active vault yet, allocateNoteId
+    // returns null — fall back to an opaque id so the note still has a stable
+    // identity in memory (the write will then fail with no-vault, which is
+    // handled below). Once assigned, the id is stable for the note's lifetime.
+    if (!noteIdRef.current) {
+      const allocated = await window.marginalia.allocateNoteId(title);
+      noteIdRef.current = allocated ?? makeId();
+    }
+
+    setSaveState('saving');
+    const result = await window.marginalia.writeNote({
+      id: noteIdRef.current,
+      title,
+      resource: { type: 'website-link', url },
+      content: {
+        prose: docToMarkdown(editorJson),
+        highlights,
+      },
+    });
+
+    if (result.ok) {
+      createdAtRef.current = result.value.createdAt;
+      modifiedAtRef.current = result.value.modifiedAt;
+      setSaveState('saved');
+    } else {
+      // e.g. `no-vault`: keep in-memory state intact and surface the failure
+      // without crashing. The next edit will retry.
+      console.warn(
+        `Autosave failed: ${result.error.code} — ${result.error.message}`,
+      );
+      setSaveState('error');
+    }
+  }, [title, url, highlights]);
+
+  // Arm the debounce whenever a tracked input changes (after load settles).
+  useEffect(() => {
+    if (!loadedRef.current) return; // don't autosave during initial load
+    if (dirtyTick === 0) return; // no user change yet
+
+    if (saveTimerRef.current !== null) window.clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = window.setTimeout(() => {
+      saveTimerRef.current = null;
+      void save();
+    }, AUTOSAVE_DELAY_MS);
+
+    return () => {
+      if (saveTimerRef.current !== null) {
+        window.clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+      }
+    };
+  }, [dirtyTick, save]);
+
+  // Title and highlight-set changes mark the note dirty. (Editor changes route
+  // through the NoteEditor `onUpdate` prop below.) Skipped until load settles
+  // so hydrating a loaded note's title/highlights doesn't trigger a save.
+  useEffect(() => {
+    if (!loadedRef.current) return;
+    markDirty();
+  }, [title, highlights, markDirty]);
 
   const clip = useCallback(async () => {
     const result = await clipSelection();
@@ -183,13 +427,85 @@ export const ResourceNoteView: FC = () => {
           collapsedSize="0%"
           onResize={(size) => setBrowserCollapsed(size.asPercentage === 0)}
         >
-          <div className="relative h-full w-full">
-            <webview
-              ref={webviewRef as React.Ref<HTMLElement>}
-              src={url}
-              className="h-full w-full"
-            />
-            {dragging && <div className="absolute inset-0 cursor-col-resize" />}
+          <div className="flex h-full w-full flex-col">
+            {/* Navigation toolbar: back / forward / reload + address bar. */}
+            <div className="flex shrink-0 items-center gap-1 border-b px-2 py-1.5">
+              <Button
+                size="icon"
+                variant="ghost"
+                className="size-8"
+                disabled={!canGoBack}
+                onClick={goBack}
+                aria-label="Go back"
+                title="Back"
+              >
+                <ArrowLeft className="size-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="size-8"
+                disabled={!canGoForward}
+                onClick={goForward}
+                aria-label="Go forward"
+                title="Forward"
+              >
+                <ArrowRight className="size-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="size-8"
+                onClick={reload}
+                aria-label="Reload"
+                title="Reload"
+              >
+                <RotateCw
+                  className={'size-4 ' + (webviewLoading ? 'animate-spin' : '')}
+                />
+              </Button>
+              <form
+                className="min-w-0 flex-1"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  navigate(addressDraft);
+                  (e.currentTarget.querySelector('input') as HTMLInputElement)?.blur();
+                }}
+              >
+                <Input
+                  value={addressDraft}
+                  onChange={(e) => setAddressDraft(e.target.value)}
+                  onFocus={(e) => {
+                    setAddressFocused(true);
+                    e.target.select();
+                  }}
+                  onBlur={() => setAddressFocused(false)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                      e.preventDefault();
+                      setAddressDraft(currentUrl);
+                      e.currentTarget.blur();
+                    }
+                  }}
+                  placeholder="Enter a web address"
+                  aria-label="Address"
+                  spellCheck={false}
+                  autoComplete="off"
+                  className="h-8 text-xs"
+                />
+              </form>
+            </div>
+
+            <div className="relative min-h-0 flex-1">
+              <webview
+                ref={webviewRef as React.Ref<HTMLElement>}
+                src={url}
+                className="h-full w-full"
+              />
+              {dragging && (
+                <div className="absolute inset-0 cursor-col-resize" />
+              )}
+            </div>
           </div>
         </ResizablePanel>
 
@@ -207,14 +523,27 @@ export const ResourceNoteView: FC = () => {
           onResize={(size) => setNoteCollapsed(size.asPercentage === 0)}
         >
           <main className="flex h-full flex-col">
-            {/* Title + clip action */}
-            <div className="flex items-center gap-2 px-5 pt-5 pb-2">
-              <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Title"
-                className="min-w-0 flex-1 border-0 bg-transparent text-2xl font-semibold tracking-tight outline-none placeholder:text-muted-foreground"
-              />
+            {/* Action toolbar: save status + clip. The title is no longer a
+                labelled input — it's an editable document heading below. */}
+            <div className="flex items-center justify-end gap-2 px-5 pt-3 pb-1">
+              {/* Subtle autosave status. Never blocks the UI; a failed write
+                  (e.g. no active vault) shows here without losing state. */}
+              <span
+                className="mr-auto text-xs text-muted-foreground"
+                title={
+                  saveState === 'error'
+                    ? "Couldn't save — check that a vault is open"
+                    : undefined
+                }
+              >
+                {saveState === 'saving'
+                  ? 'Saving…'
+                  : saveState === 'saved'
+                    ? 'Saved'
+                    : saveState === 'error'
+                      ? 'Not saved'
+                      : ''}
+              </span>
               <Button
                 size="sm"
                 variant="secondary"
@@ -228,18 +557,44 @@ export const ResourceNoteView: FC = () => {
               </Button>
             </div>
 
+            {/* Editable title, styled as the note's document heading. It reads
+                as an <h1> but stays directly editable (Enter jumps focus into
+                the body rather than inserting a newline). */}
+            <div className="px-5 pb-2">
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    editorRef.current?.focus();
+                  }
+                }}
+                placeholder="Untitled note"
+                aria-label="Note title"
+                className="w-full border-0 bg-transparent text-3xl font-bold tracking-tight outline-none placeholder:text-muted-foreground/60"
+              />
+            </div>
+
             {/* Notes editor — fills the space between title and highlights. */}
             <div className="flex min-h-0 flex-1 flex-col px-5">
               <NoteEditor
                 ref={editorRef}
                 onActivateHighlight={scrollTo}
                 onHighlightIdsChange={handleHighlightIdsChange}
+                onUpdate={() => {
+                  // Editor edits mark the note dirty (debounced autosave). The
+                  // guard skips programmatic hydration, which is dispatched with
+                  // `emitUpdate: false` and so never reaches here anyway.
+                  if (loadedRef.current) markDirty();
+                }}
               />
             </div>
 
             {/* Highlights index — pinned to the bottom, collapsed by default. */}
             <HighlightsIndex
               highlights={highlights}
+              unresolvedIds={unresolvedIds}
               onActivate={scrollTo}
               onRemove={removeHighlight}
             />
