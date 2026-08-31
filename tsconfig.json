@@ -1,0 +1,27 @@
+{
+  /* Root config.
+   *
+   * Two jobs:
+   *  1. Provides compilerOptions used by ts-node when Electron Forge loads the
+   *     build tooling written in TypeScript (forge.config.ts, webpack.*.ts).
+   *     These run in Node, so CommonJS + Node types.
+   *  2. References the per-target projects so `tsc --build` and editors
+   *     type-check the app source with the correct lib/JSX settings.
+   */
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "lib": ["ES2022"],
+    "types": ["node"],
+    "noEmit": true,
+    /* The build files intentionally use webpack/forge APIs loosely; don't fail
+       the whole toolchain on an unused local in a config file. */
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
+  },
+  "include": ["forge.config.ts", "webpack.*.ts"],
+  "references": [
+    { "path": "./tsconfig.electron.json" },
+    { "path": "./tsconfig.ui.json" }
+  ]
+}

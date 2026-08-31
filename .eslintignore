@@ -1,0 +1,5 @@
+# Build output — not source, don't lint
+dist/
+.webpack/
+out/
+node_modules/

@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    /* The Electron main and preload processes run in a Node.js environment. */
+    "composite": true,
+    "module": "commonjs",
+    "lib": ["ES2022"],
+    "types": ["node"],
+    "outDir": "dist/electron",
+    "paths": {
+      "@main/*": ["src/electron/*"],
+      "@shared/*": ["src/shared/*"]
+    }
+  },
+  "include": ["src/electron/**/*", "src/shared/**/*"]
+}
