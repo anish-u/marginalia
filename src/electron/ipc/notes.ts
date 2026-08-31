@@ -3,9 +3,14 @@ import { BrowserWindow, ipcMain } from 'electron';
 import { IpcChannels } from '@main/ipc-channels';
 import { vaultManager } from '@main/ipc/vault';
 import { NoteStore } from '@main/vault/note-store';
-import { setNotesChangeHandler, watchNotesDir } from '@main/vault/notes-watcher';
+import {
+  markAppWrite,
+  setNotesChangeHandler,
+  watchNotesDir,
+} from '@main/vault/notes-watcher';
 import { createResourceNoteWindow } from '@main/windows';
 
+import type { NotesChangedInfo } from '@shared/ipc';
 import type {
   ResourceNote,
   ResourceNoteInput,
@@ -22,20 +27,19 @@ import type {
  * We send to all windows including the sender — an open list re-fetches and the
  * cost of an extra fetch is trivial, so there's no need to exclude the sender.
  *
- * The optional `rename` payload carries `{ oldId, newId }` when the change was a
- * rename that moved a note's file to a new id. A note-editor window bound to
- * `oldId` uses it to adopt `newId`, so it keeps autosaving to the renamed file
- * instead of recreating the old one. Ordinary changes send no payload.
+ * The optional `info` payload names the affected note: `id` is the note that
+ * was written/deleted/renamed (so an open window showing that note can reload
+ * its content), and `oldId`/`newId` are set for a rename that moved the file
+ * (so a window bound to `oldId` adopts `newId`). A bare change (e.g. an external
+ * filesystem event from the watcher) sends `null` — every list just re-fetches.
  *
  * Exported so the on-disk notes watcher (see `notes-watcher.ts`) can trigger the
  * same refresh when files change *outside* the app (e.g. deleted in Finder).
  */
-export function broadcastNotesChanged(rename?: {
-  oldId: string;
-  newId: string;
-}): void {
-  for (const win of BrowserWindow.getAllWindows()) {
-    win.webContents.send(IpcChannels.NotesChanged, rename ?? null);
+export function broadcastNotesChanged(info?: NotesChangedInfo): void {
+  const wins = BrowserWindow.getAllWindows();
+  for (const win of wins) {
+    win.webContents.send(IpcChannels.NotesChanged, info ?? null);
   }
 }
 
@@ -145,10 +149,16 @@ export const registerNotesHandlers = (): void => {
           },
         };
       }
+      // Open the watcher's quiet window *before* touching disk so the fs.watch
+      // events this write produces are recognised as our own and suppressed —
+      // the explicit broadcast below is the single notification for this action
+      // (Req 3.1, 3.2).
+      markAppWrite();
       const result = await noteStore.write(active.path, note);
       // A successful write may have created a new note or changed its title —
-      // let every window's list refresh (Req 3.1/3.3-style consistency).
-      if (result.ok) broadcastNotesChanged();
+      // let every window's list refresh (Req 3.1/3.3-style consistency) and
+      // name the note so another window showing it can reload its content.
+      if (result.ok) broadcastNotesChanged({ id: result.value.id });
       return result;
     },
   );
@@ -169,8 +179,11 @@ export const registerNotesHandlers = (): void => {
           },
         };
       }
+      // Suppress the watcher echo for our own delete; the broadcast below is
+      // the single notification for this action (Req 3.1, 3.2).
+      markAppWrite();
       const result = await noteStore.delete(active.path, id);
-      if (result.ok) broadcastNotesChanged();
+      if (result.ok) broadcastNotesChanged({ id });
       return result;
     },
   );
@@ -195,15 +208,22 @@ export const registerNotesHandlers = (): void => {
       // The store handles slug collisions and does an in-place rewrite when the
       // slug is unchanged. Any read error (note-not-found / unreadable /
       // unknown-type) is returned verbatim, leaving the file untouched.
+      //
+      // A rename touches the notes dir (either an in-place rewrite or a
+      // delete+create for the move), so open the quiet window first to suppress
+      // the watcher echo; the broadcast below is the single notification for
+      // this action (Req 3.1, 3.2).
+      markAppWrite();
       const result = await noteStore.rename(active.path, id, title);
       if (result.ok) {
-        // Tell every window the notes changed; when the id actually moved,
-        // include {oldId, newId} so a note window bound to the old id adopts
-        // the new one instead of recreating the old file on its next autosave.
+        // Always name the (new) id so a window showing it can reload. When the
+        // id actually moved, also include {oldId, newId} so a window bound to
+        // the old id adopts the new one instead of recreating the old file on
+        // its next autosave.
         broadcastNotesChanged(
           result.value.id !== id
-            ? { oldId: id, newId: result.value.id }
-            : undefined,
+            ? { id: result.value.id, oldId: id, newId: result.value.id }
+            : { id: result.value.id },
         );
       }
       return result;

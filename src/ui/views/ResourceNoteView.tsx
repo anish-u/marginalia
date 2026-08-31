@@ -27,13 +27,42 @@ import { docToMarkdown, markdownToDoc } from '@ui/lib/note-markdown';
 import type { Highlight } from '@shared/highlight';
 
 /** Fallback site loaded when no `?url=` is supplied. */
-const DEFAULT_URL = 'https://www.medium.com';
+const DEFAULT_URL = 'https://www.uanish.com';
 
 /** Below this width (% of the group) a pane snaps shut to its collapsed rail. */
 const MIN_PANE_SIZE = '20%';
 
 const makeId = (): string =>
   `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+
+/**
+ * Order-sensitive structural equality for two highlight lists. Used by the
+ * content-equality guard (Req 4.3): a reload whose highlights match the
+ * current ones — same items, same order, same fields — is treated as
+ * identical. We compare every anchor field (not just id/text) so a highlight
+ * that changed its anchor context off-screen still counts as a real change.
+ */
+const highlightsEqual = (
+  a: readonly Highlight[],
+  b: readonly Highlight[],
+): boolean => {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    const x = a[i];
+    const y = b[i];
+    if (
+      x.id !== y.id ||
+      x.text !== y.text ||
+      x.prefix !== y.prefix ||
+      x.suffix !== y.suffix ||
+      x.url !== y.url ||
+      x.createdAt !== y.createdAt
+    ) {
+      return false;
+    }
+  }
+  return true;
+};
 
 /**
  * A split window: a browser pane and a note editor, separated by a draggable
@@ -62,7 +91,9 @@ export const ResourceNoteView: FC = () => {
   const titleParam = params.get('title');
 
   // Webview ↔ guest-annotator glue: inject, paint, scroll, clip, ready state.
-  const { webviewRef, ready, paint, scrollTo, clip: clipSelection } =
+  // `readyTick` bumps on every guest (re)load so the repaint effect re-anchors
+  // highlights after the user navigates away in the browser pane and back.
+  const { webviewRef, ready, readyTick, paint, scrollTo, clip: clipSelection } =
     useAnnotator();
   const editorRef = useRef<NoteEditorHandle | null>(null);
 
@@ -104,19 +135,39 @@ export const ResourceNoteView: FC = () => {
     if (!addressFocused) setAddressDraft(currentUrl);
   }, [currentUrl, addressFocused]);
 
-  // Note identity + persisted timestamps. `id` is null until a fresh note is
-  // first saved (then `makeId()` assigns it once and it becomes the filename
-  // stem); an existing note carries its id from load. `createdAt`/`modifiedAt`
-  // are whatever the store last returned. These live in refs (not state)
-  // because they're read inside the debounced save without needing to re-run
-  // effects when they change.
+  // Note identity + persisted timestamps. For a fresh note the id is normally
+  // assigned eagerly on mount (see the load effect) so the window is a
+  // Bound_Note from the start; if no vault is active it stays null and is
+  // assigned lazily on first save. An existing note carries its id from load.
+  // `createdAt`/`modifiedAt` are whatever the store last returned. These live
+  // in refs (not state) because they're read inside the debounced save without
+  // needing to re-run effects when they change.
   const noteIdRef = useRef<string | null>(noteId);
   const createdAtRef = useRef<number | null>(null);
   const modifiedAtRef = useRef<number | null>(null);
 
+  // Mirrors of the current title / highlight-set in refs so the content-equality
+  // guard in `hydrateFromNote` can read *live* values without a stale closure.
+  // `hydrateFromNote` is a `useCallback([])` (stable for the window's life), so
+  // it can't observe the `title`/`highlights` state directly; these refs, kept
+  // in sync by the effect below, give it the current content to compare against.
+  const titleRef = useRef(title);
+  const highlightsRef = useRef(highlights);
+
   // Guards the load so a fresh note (or a note being hydrated) doesn't autosave
   // before/while it's being populated. Autosave only runs after load settles.
   const loadedRef = useRef(false);
+  // True while this window has local edits not yet flushed to disk (a debounce
+  // is armed or a save is in flight). Used to avoid clobbering active typing
+  // when another window's change would otherwise trigger a reload here.
+  const pendingSaveRef = useRef(false);
+  // Raised while `hydrateFromNote` applies programmatic state (title, url,
+  // highlights, editor doc) so the resulting title/highlights effect does NOT
+  // mark the note dirty — otherwise a reload would re-save identical content in
+  // a loop and re-broadcast (Req 2.3). It is lowered by the dirty effect itself
+  // on the run those state updates schedule (see that effect), so the suppress
+  // window doesn't depend on microtask-vs-effect flush ordering.
+  const hydratingRef = useRef(false);
 
   // Subtle save status for the header, so a failed write (e.g. no active vault)
   // is visible without crashing or losing in-memory state.
@@ -140,6 +191,16 @@ export const ResourceNoteView: FC = () => {
       return 'Resource';
     }
   }, [url]);
+
+  // Keep the guard's ref mirrors aligned with the rendered title/highlights, so
+  // `hydrateFromNote`'s content-equality check compares against what the window
+  // currently shows (not a value captured when the callback was created).
+  useEffect(() => {
+    titleRef.current = title;
+  }, [title]);
+  useEffect(() => {
+    highlightsRef.current = highlights;
+  }, [highlights]);
 
   useEffect(() => {
     document.title = title.trim() === '' ? 'Resource Note' : title;
@@ -166,51 +227,122 @@ export const ResourceNoteView: FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [ready, highlights, paint]);
+    // `readyTick` (not `ready`) is a dependency so a re-injection after the
+    // guest page navigates re-paints the highlights onto the fresh document.
+  }, [ready, readyTick, highlights, paint]);
 
   // --- Load an existing note on mount (Req 6.3) -------------------------------
+  // Read a note by id and hydrate this window from it: id/timestamps, title,
+  // webview url, highlights, and the editor document. Programmatic hydration
+  // uses `emitUpdate: false` so it isn't mistaken for a user edit. Shared by
+  // the initial load and the cross-window reload (multi-window sync).
+  const hydrateFromNote = useCallback(async (id: string): Promise<boolean> => {
+    const result = await window.marginalia.readNote(id);
+    if (!result.ok) return false;
+    const note = result.value;
+    // Suppress the dirty-marking effect for the programmatic state below so a
+    // reload doesn't look like a user edit (Req 2.3). The flag is *consumed by
+    // the dirty effect itself* (it lowers `hydratingRef` on the run these state
+    // updates trigger), NOT on a microtask: React flushes passive effects on a
+    // scheduler task (a macrotask), so a `queueMicrotask` would lower the flag
+    // *before* the effect ran and the reload would spuriously mark the note
+    // dirty — re-saving and re-broadcasting in a loop. Tying the lower to the
+    // effect run removes that timing dependence. The editor doc is applied with
+    // `emitUpdate: false`, so the editor's own `onUpdate → markDirty` path is
+    // suppressed independently of this flag.
+    hydratingRef.current = true;
+    noteIdRef.current = note.id;
+    createdAtRef.current = note.createdAt;
+    modifiedAtRef.current = note.modifiedAt;
+    setTitle(note.title);
+    // Only website-link resources carry a url today; other (reserved) variants
+    // leave the webview on its default.
+    if (note.resource.type === 'website-link') setUrl(note.resource.url);
+    setHighlights(note.content.highlights);
+
+    // Content-equality guard (Req 4.1, 4.3). This path is shared by the initial
+    // load and the cross-window reload. On a reload triggered by *this* window's
+    // own save (the broadcast echo), the on-disk content is byte-for-byte what
+    // the editor already shows — but the title/url/highlights state setters
+    // above are already no-ops in React when the value is unchanged, whereas
+    // `editor.setContent` ALWAYS resets the ProseMirror selection even for
+    // identical content, which would blow away the user's cursor/selection.
+    // So we specifically gate the `setContent` call: only re-apply the doc when
+    // the freshly-read prose actually differs from what the editor holds now.
+    //
+    // On the initial load the editor is empty, so the prose differs and the
+    // content applies as expected; on an echo it matches and we skip the reset.
+    // Comparison is via the same Markdown serialization used to persist, so the
+    // editor's current doc and the note's stored prose are compared on equal
+    // footing. (The `hydratingRef`/non-dirtying behavior above is untouched —
+    // skipping `setContent` only avoids the selection reset.)
+    const currentJson = editorRef.current?.getJSON();
+    const currentProse =
+      currentJson != null ? docToMarkdown(currentJson) : null;
+    const proseMatches = currentProse === note.content.prose;
+    const contentIdentical =
+      proseMatches &&
+      titleRef.current === note.title &&
+      highlightsEqual(highlightsRef.current, note.content.highlights);
+
+    if (!contentIdentical) {
+      editorRef.current?.setContent(
+        markdownToDoc(note.content.prose, note.content.highlights),
+        false,
+      );
+    }
+    return true;
+  }, []);
+
   // If `noteId` is present, pull the note from the active vault: set the title,
   // drive the <webview src> from the stored resource url, hydrate the editor
   // from the prose Markdown, and restore the highlight anchors. On failure we
   // fall back to an empty fresh note rather than crashing.
+  //
+  // For a fresh note (no `?noteId=`) we assign the Note_Identity EAGERLY here,
+  // before the first edit, instead of lazily inside `save()`. Two reasons
+  // (multi-window sync, fix A):
+  //  - Symmetry: a window that assigns its id up front is a Bound_Note from the
+  //    start, behaviorally identical to a window opened by id. There's no
+  //    separate "authoring" code path, so the create-then-open flow converges
+  //    exactly like create-close-reopen (Req 1.3).
+  //  - Binding: with the id fixed at creation, this window's `onNotesChanged`
+  //    handler can match `info.id` from the very first save, so a second window
+  //    opened on the same note (which loads by that id) shares the identity and
+  //    the two windows stay in sync (Req 1.1, 1.2).
+  // Eager allocation requires an active vault — `allocateNoteId` returns null
+  // otherwise. With no vault there's no shared on-disk file to sync to (Req
+  // 1.4), so we stay a Fresh_Note and keep the lazy allocation in `save()`.
+  // Allocation derives the id from the *initial* title (empty → default slug);
+  // it fixes the id at creation and later title edits never move the file (only
+  // explicit rename does, per `vault-and-notes`).
   useEffect(() => {
     if (!noteId) {
-      // Fresh note: nothing to load; enable autosave immediately.
-      loadedRef.current = true;
-      return;
+      // Fresh note: no file to load. Try to claim an id eagerly, then enable
+      // autosave. The eager allocation only reserves an id (nothing is written
+      // and no state is touched), so it never marks the note dirty or triggers
+      // a save. This effect only runs for the fresh-note case, so it can't race
+      // with the loaded-note hydration below.
+      let cancelled = false;
+      void (async () => {
+        const initialTitle = titleParam ?? '';
+        const allocated = await window.marginalia.allocateNoteId(initialTitle);
+        if (cancelled) return;
+        // null ⇒ no active vault: remain a Fresh_Note; `save()` allocates lazily
+        // later. A non-null id binds this window now.
+        if (allocated) noteIdRef.current = allocated;
+        loadedRef.current = true;
+      })();
+      return () => {
+        cancelled = true;
+      };
     }
 
     let cancelled = false;
     void (async () => {
-      const result = await window.marginalia.readNote(noteId);
+      const ok = await hydrateFromNote(noteId);
       if (cancelled) return;
-
-      if (result.ok) {
-        const note = result.value;
-        noteIdRef.current = note.id;
-        createdAtRef.current = note.createdAt;
-        modifiedAtRef.current = note.modifiedAt;
-        setTitle(note.title);
-        // Only website-link resources carry a url today; other (reserved)
-        // variants leave the webview on its default.
-        if (note.resource.type === 'website-link') setUrl(note.resource.url);
-        setHighlights(note.content.highlights);
-        // Hydrate the editor. `emitUpdate: false` so this programmatic load
-        // isn't mistaken for a user edit (which would trigger an autosave).
-        editorRef.current?.setContent(
-          markdownToDoc(note.content.prose, note.content.highlights),
-          false,
-        );
-        setSaveState('saved');
-      } else {
-        // Couldn't read it (missing / unreadable / no vault). Keep the empty
-        // note so the user can still work; surface the failure subtly.
-        console.warn(
-          `Failed to load note ${noteId}: ${result.error.code} — ${result.error.message}`,
-        );
-        setSaveState('error');
-      }
-
+      setSaveState(ok ? 'saved' : 'error');
       // Whether load succeeded or failed, autosave may now run for edits the
       // user makes from here.
       loadedRef.current = true;
@@ -219,28 +351,42 @@ export const ResourceNoteView: FC = () => {
     return () => {
       cancelled = true;
     };
-    // Load runs once for the id this window was opened with.
-  }, [noteId]);
+    // Load runs once for the id this window was opened with. `titleParam` is
+    // read only in the fresh-note branch and is stable for the window's life.
+  }, [noteId, titleParam, hydrateFromNote]);
 
-  // --- Adopt a new id if this note is renamed elsewhere -----------------------
-  // If the note open in this window is renamed from the launcher, its file moves
-  // to a new id. The main process broadcasts NotesChanged with { oldId, newId };
-  // when oldId matches the id we're currently bound to, adopt newId so our next
-  // autosave writes the renamed file instead of recreating the old one. We also
-  // sync the title to match. Guarded by a ref check so unrelated broadcasts and
-  // our own renames don't disturb this window.
+  // --- Cross-window sync: react to a change to *this* note elsewhere ----------
+  // The main process broadcasts NotesChanged with info about the affected note.
+  // Two cases matter for an open note window:
+  //  1. Rename ({ oldId, newId }) of the note we're bound to → adopt newId so
+  //     our next autosave writes the renamed file rather than recreating the
+  //     old one.
+  //  2. A write to the note we're showing ({ id }) from another window → reload
+  //     its content so both windows stay in sync (Apple-Notes style).
+  // We must NOT clobber active local typing: if this window has unsaved edits
+  // (a debounce armed or a save in flight), skip the reload — our own save will
+  // win and re-broadcast. This also naturally ignores the echo of our own save
+  // (by the time the broadcast arrives we're clean and re-hydrating to identical
+  // on-disk content is a harmless no-op).
   useEffect(() => {
-    return window.marginalia.onNotesChanged((rename) => {
-      if (!rename) return;
-      if (noteIdRef.current !== rename.oldId) return;
-      noteIdRef.current = rename.newId;
-      // Re-read so the heading reflects the new title without marking dirty.
-      void (async () => {
-        const result = await window.marginalia.readNote(rename.newId);
-        if (result.ok) setTitle(result.value.title);
-      })();
+    return window.marginalia.onNotesChanged((info) => {
+      const currentId = noteIdRef.current;
+      if (!info) return;
+      if (!currentId) return;
+
+      // Rename adoption: our id moved.
+      if (info.oldId && info.newId && currentId === info.oldId) {
+        noteIdRef.current = info.newId;
+        if (!pendingSaveRef.current) void hydrateFromNote(info.newId);
+        return;
+      }
+
+      // Content reload: the note we're showing changed on disk elsewhere.
+      if (info.id && info.id === currentId && !pendingSaveRef.current) {
+        void hydrateFromNote(info.id);
+      }
     });
-  }, []);
+  }, [hydrateFromNote]);
 
   // --- Debounced autosave (~800ms idle, Req 5.1/5.4) --------------------------
   // Title edits, editor changes, and highlight-set changes mark the note dirty;
@@ -259,12 +405,14 @@ export const ResourceNoteView: FC = () => {
     const editorJson = editorRef.current?.getJSON();
     if (!editorJson) return; // editor not mounted yet
 
-    // Assign an id once for a fresh note; it becomes the filename stem. Derive
-    // it from the title so the on-disk file is recognizable (e.g.
-    // `my-research-notes.md`). If there's no active vault yet, allocateNoteId
-    // returns null — fall back to an opaque id so the note still has a stable
-    // identity in memory (the write will then fail with no-vault, which is
-    // handled below). Once assigned, the id is stable for the note's lifetime.
+    // Lazy id assignment — the no-vault fallback. A fresh note normally claims
+    // its id eagerly on mount (see the load effect), so this branch only runs
+    // when eager allocation returned null because no vault was active. Derive
+    // the id from the title so the on-disk file is recognizable (e.g.
+    // `my-research-notes.md`); if `allocateNoteId` still returns null (still no
+    // vault), fall back to an opaque id so the note has a stable in-memory
+    // identity (the write then fails with no-vault, handled below). Once
+    // assigned, the id is stable for the note's lifetime.
     if (!noteIdRef.current) {
       const allocated = await window.marginalia.allocateNoteId(title);
       noteIdRef.current = allocated ?? makeId();
@@ -293,12 +441,19 @@ export const ResourceNoteView: FC = () => {
       );
       setSaveState('error');
     }
+    // The write reached disk (success or fail); this window is no longer
+    // holding unsaved edits, so a cross-window reload may proceed again.
+    pendingSaveRef.current = false;
   }, [title, url, highlights]);
 
   // Arm the debounce whenever a tracked input changes (after load settles).
   useEffect(() => {
     if (!loadedRef.current) return; // don't autosave during initial load
     if (dirtyTick === 0) return; // no user change yet
+
+    // This window now has unsaved local edits — block cross-window reloads
+    // until the pending save flushes (see the onNotesChanged effect).
+    pendingSaveRef.current = true;
 
     if (saveTimerRef.current !== null) window.clearTimeout(saveTimerRef.current);
     saveTimerRef.current = window.setTimeout(() => {
@@ -317,8 +472,23 @@ export const ResourceNoteView: FC = () => {
   // Title and highlight-set changes mark the note dirty. (Editor changes route
   // through the NoteEditor `onUpdate` prop below.) Skipped until load settles
   // so hydrating a loaded note's title/highlights doesn't trigger a save.
+  //
+  // A programmatic reload (`hydrateFromNote`) sets `hydratingRef` before
+  // updating title/highlights; those updates schedule this effect, and *this
+  // run* both skips `markDirty` and clears the flag. Consuming the flag here —
+  // rather than lowering it on a microtask — is what makes the reload reliably
+  // non-dirtying: React flushes this passive effect on a scheduler task, which
+  // runs after any microtask, so a microtask-based lower would clear the flag
+  // too early and let the reload mark the note dirty (Req 2.3). Clearing it in
+  // the same run that observes it removes that ordering hazard.
   useEffect(() => {
     if (!loadedRef.current) return;
+    if (hydratingRef.current) {
+      // This effect run is the programmatic reload's own title/highlights
+      // update. Consume the flag and don't treat it as a user edit.
+      hydratingRef.current = false;
+      return;
+    }
     markDirty();
   }, [title, highlights, markDirty]);
 

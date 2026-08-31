@@ -26,9 +26,16 @@ import type { ClipResult, Highlight } from '@shared/highlight';
 export function useAnnotator() {
   const webviewRef = useRef<WebviewElement | null>(null);
   const [ready, setReady] = useState(false);
+  // Bumped on *every* successful (re)injection, including after the guest page
+  // navigates. `ready` (a boolean) only flips false→true once, so an effect
+  // keyed on it won't re-run when the user navigates away and back — but the
+  // new guest document has a fresh, empty annotator, so highlights must be
+  // re-painted. Consumers key their repaint effect on `readyTick` so a repaint
+  // fires after each navigation, not just the first load.
+  const [readyTick, setReadyTick] = useState(0);
 
   // Inject the annotator into the guest page every time it (re)loads. `ready`
-  // gates the Clip action and drives the initial paint.
+  // gates the Clip action; `readyTick` drives the (re)paint on every load.
   useEffect(() => {
     const webview = webviewRef.current;
     if (!webview) return;
@@ -36,7 +43,12 @@ export function useAnnotator() {
     const onDomReady = () => {
       webview
         .executeJavaScript(ANNOTATOR_SOURCE)
-        .then(() => setReady(true))
+        .then(() => {
+          setReady(true);
+          // Bump on every injection so a navigation (new guest document, empty
+          // annotator) re-triggers the consumer's repaint.
+          setReadyTick((n) => n + 1);
+        })
         .catch(() => setReady(false));
     };
 
@@ -89,5 +101,5 @@ export function useAnnotator() {
     }
   }, []);
 
-  return { webviewRef, ready, paint, scrollTo, clip };
+  return { webviewRef, ready, readyTick, paint, scrollTo, clip };
 }

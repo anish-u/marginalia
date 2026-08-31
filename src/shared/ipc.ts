@@ -120,10 +120,19 @@ export interface MarginaliaApi {
 }
 
 /**
- * Payload for {@link MarginaliaApi.onNotesChanged} when the change was a rename
- * that moved a note's file: the note previously at `oldId` now lives at `newId`.
+ * Payload for {@link MarginaliaApi.onNotesChanged} describing *which* note
+ * changed, so an open note window can react precisely (reload its content when
+ * the same note was edited in another window, or adopt a new id after a rename)
+ * rather than just refreshing a list.
+ *
+ * - `id` — the note that was written, deleted, or renamed. For a rename it is
+ *   the note's *new* id (post-move). Absent for a change that isn't tied to a
+ *   single note (e.g. an external filesystem event picked up by the watcher).
+ * - `oldId`/`newId` — present only for a rename that moved a note's file, so a
+ *   window bound to `oldId` can adopt `newId`.
  */
 export interface NotesChangedInfo {
-  oldId: string;
-  newId: string;
+  id?: string;
+  oldId?: string;
+  newId?: string;
 }

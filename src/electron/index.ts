@@ -4,7 +4,6 @@ import { createMainWindow } from '@main/windows';
 import { installContentSecurityPolicy } from '@main/security';
 import { registerIpcHandlers } from '@main/ipc';
 import { vaultManager } from '@main/ipc/vault';
-import { broadcastNotesChanged } from '@main/ipc/notes';
 import { installApplicationMenu } from '@main/menu';
 import { createTray } from '@main/tray';
 
@@ -31,13 +30,12 @@ app.on('ready', async () => {
   createMainWindow();
 });
 
-// Refresh notes when a window regains focus. The on-disk watcher catches most
-// external changes, but `fs.watch` can miss events (especially on macOS), so a
-// focus-time re-list is a cheap belt-and-braces: if the user deleted note files
-// in Finder and switched back to the app, the list updates immediately.
-app.on('browser-window-focus', () => {
-  broadcastNotesChanged();
-});
+// Note: we intentionally do NOT broadcast `notes:changed` on window focus.
+// Focus changes are not note-set changes, and a focus-time re-list produced a
+// redundant broadcast to every window on every focus (multi-window-sync Req
+// 3.3). External changes are still surfaced by the On_Disk_Watcher (a debounced
+// `fs.watch` on the vault's `notes/` directory), and in-app writes broadcast
+// explicitly from the write handlers — so no focus-based refresh is needed.
 
 // Quit when all windows are closed, except on macOS. There, it's common for
 // applications and their menu bar to stay active until the user quits

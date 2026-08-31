@@ -33,8 +33,28 @@ let debounceTimer: NodeJS.Timeout | null = null;
 /** Registered change callback (set once by the owner, e.g. ipc/notes.ts). */
 let onChange: (() => void) | null = null;
 
+/**
+ * Timestamp (ms, `Date.now()`) until which fs.watch events are ignored because
+ * the app itself just wrote to the notes dir. Zero means "not suppressing".
+ * See {@link markAppWrite} for why this exists.
+ */
+let quietUntil = 0;
+
 /** Coalesce fs.watch's event storms into a single delayed notification. */
 const DEBOUNCE_MS = 150;
+
+/**
+ * How long an app write silences the watcher. `fs.watch` reports the app's own
+ * writes just like external ones, so without this every in-app save would fire
+ * twice: once via the explicit `NotesChanged` broadcast from the write handler,
+ * and once as a watcher echo (Req 3.1, 3.2). The window must comfortably span
+ * the raw event storm a single write produces (fs.watch emits several events
+ * per operation) plus the atomic write's rename step, so we make it a little
+ * longer than the debounce interval. It only needs to be long enough to absorb
+ * the app's own events, not so long that a genuinely external change arriving
+ * right after an app write gets swallowed for an unreasonable time.
+ */
+const APP_WRITE_QUIET_MS = DEBOUNCE_MS + 100;
 
 /**
  * Register the callback fired (debounced) whenever the watched notes directory
@@ -44,7 +64,30 @@ export function setNotesChangeHandler(handler: () => void): void {
   onChange = handler;
 }
 
+/**
+ * Open (or extend) the "app-write quiet window": for a short interval after
+ * this call, fs.watch events are ignored so the watcher does not echo a change
+ * the app just made itself. Call this immediately around an in-app note
+ * write/delete/rename — the explicit `NotesChanged` broadcast from that handler
+ * is the single source of truth for in-app changes, and this suppression stops
+ * the watcher from emitting a redundant second event for the same action
+ * (Req 3.1, 3.2).
+ *
+ * It intentionally does not touch the debounce timer: genuinely external
+ * changes (with no recent `markAppWrite`) still coalesce and fire one
+ * payload-less notification as before (Req 3.4, 3.5). "Extend" rather than
+ * "set" so a burst of app writes keeps the window open through the last one.
+ */
+export function markAppWrite(): void {
+  quietUntil = Date.now() + APP_WRITE_QUIET_MS;
+}
+
 function scheduleNotify(): void {
+  // Inside the app-write quiet window this event is (almost certainly) the echo
+  // of the app's own write, already covered by the explicit broadcast — drop it
+  // and do not arm the debounce, so no redundant notification fires (Req 3.2).
+  if (Date.now() < quietUntil) return;
+
   if (debounceTimer) clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => {
     debounceTimer = null;
