@@ -9,3 +9,4 @@
  */
 export { createMainWindow } from './main';
 export { createNoteWindow } from './note';
+export { createResourceNoteWindow } from './resource-note';

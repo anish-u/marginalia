@@ -5,4 +5,5 @@
 export enum IpcChannels {
   GetAppVersion = 'app:get-version',
   OpenNoteWindow = 'window:open-note',
+  OpenResourceNoteWindow = 'window:open-resource-note',
 }

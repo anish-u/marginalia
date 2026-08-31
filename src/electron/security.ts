@@ -23,10 +23,24 @@ const buildCsp = (isDev: boolean): string => {
   ].join('; ');
 };
 
-/** Attaches the CSP header to all responses for the default session. */
+/**
+ * Attaches the CSP header to the app's own renderer responses only.
+ *
+ * The `<webview>` in the resource-note window loads external sites (google.com,
+ * medium.com, …) through this same default session. Those pages ship their own
+ * CSPs — or none — and forcing our strict app policy onto them breaks their
+ * images, fonts, scripts, and network calls. So we skip any response that
+ * originated from a webview (`webContents.getType() === 'webview'`) and only
+ * harden requests coming from our app windows.
+ */
 export const installContentSecurityPolicy = (): void => {
   const csp = buildCsp(!app.isPackaged);
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    // Leave guest webview pages untouched — they manage their own CSP.
+    if (details.webContents?.getType() === 'webview') {
+      callback({ responseHeaders: details.responseHeaders });
+      return;
+    }
     callback({
       responseHeaders: {
         ...details.responseHeaders,

@@ -17,7 +17,16 @@
     /* The build files intentionally use webpack/forge APIs loosely; don't fail
        the whole toolchain on an unused local in a config file. */
     "noUnusedLocals": false,
-    "noUnusedParameters": false
+    "noUnusedParameters": false,
+    /* Mirrors the renderer's `@/*` alias (defined in tsconfig.ui.json) so
+       tooling that reads the root config — e.g. the shadcn CLI — resolves
+       `@/components/ui` to the real folder instead of creating a literal `@`
+       directory. Not used for type-checking here (this config only includes
+       the build files), it's purely for path resolution. */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/ui/*"]
+    }
   },
   "include": ["forge.config.ts", "webpack.*.ts"],
   "references": [

@@ -90,6 +90,13 @@
   * {
     @apply border-border outline-ring/50;
   }
+  /* Establish a full-height chain so components relying on `height: 100%`
+     (e.g. the resizable panel group and its panels) can fill the window. */
+  html,
+  body,
+  #root {
+    @apply h-full;
+  }
   body {
     @apply bg-background text-foreground;
   }

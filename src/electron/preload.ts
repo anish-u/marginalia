@@ -12,6 +12,8 @@ import { IpcChannels } from '@main/ipc-channels';
 const api: MarginaliaApi = {
   getAppVersion: () => ipcRenderer.invoke(IpcChannels.GetAppVersion),
   openNoteWindow: () => ipcRenderer.invoke(IpcChannels.OpenNoteWindow),
+  openResourceNoteWindow: (url) =>
+    ipcRenderer.invoke(IpcChannels.OpenResourceNoteWindow, url),
 };
 
 contextBridge.exposeInMainWorld('marginalia', api);

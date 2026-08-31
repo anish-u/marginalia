@@ -11,4 +11,9 @@ export interface MarginaliaApi {
   getAppVersion: () => Promise<string>;
   /** Asks the main process to open a new note window. */
   openNoteWindow: () => Promise<void>;
+  /**
+   * Asks the main process to open a resource-note window: a browser pane
+   * (loading `url`) split alongside a note editor.
+   */
+  openResourceNoteWindow: (url?: string) => Promise<void>;
 }

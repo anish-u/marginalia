@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron';
 
-import { createNoteWindow } from '@main/windows';
+import { createNoteWindow, createResourceNoteWindow } from '@main/windows';
 import { IpcChannels } from '@main/ipc-channels';
 
 /**
@@ -13,4 +13,11 @@ export const registerWindowHandlers = (): void => {
   ipcMain.handle(IpcChannels.OpenNoteWindow, () => {
     createNoteWindow();
   });
+
+  ipcMain.handle(
+    IpcChannels.OpenResourceNoteWindow,
+    (_event, url?: string) => {
+      createResourceNoteWindow(url);
+    },
+  );
 };

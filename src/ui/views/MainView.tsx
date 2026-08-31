@@ -28,9 +28,21 @@ export const MainView: FC = () => {
         </p>
       </div>
 
-      <Button size="lg" onClick={() => window.marginalia.openNoteWindow()}>
-        New Note
-      </Button>
+      <div className="flex flex-col items-center gap-3">
+        <Button size="lg" onClick={() => window.marginalia.openNoteWindow()}>
+          New Note
+        </Button>
+
+        <Button
+          size="lg"
+          variant="outline"
+          onClick={() =>
+            window.marginalia.openResourceNoteWindow('https://en.wikipedia.org/wiki/1886_Charleston_earthquake')
+          }
+        >
+          New Resource Note
+        </Button>
+      </div>
 
       <p className="text-xs text-muted-foreground">Version {version}</p>
     </main>

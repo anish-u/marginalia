@@ -4,6 +4,7 @@ import { HashRouter, Route, Routes } from 'react-router';
 
 import { MainView } from '@ui/views/MainView';
 import { NoteView } from '@ui/views/NoteView';
+import { ResourceNoteView } from '@ui/views/ResourceNoteView';
 
 
 /**
@@ -22,6 +23,7 @@ export const App: FC = () => (
     <Routes>
       <Route path="/" element={<MainView />} />
       <Route path="/note" element={<NoteView />} />
+      <Route path="/resource-note" element={<ResourceNoteView />} />
     </Routes>
   </HashRouter>
 );
