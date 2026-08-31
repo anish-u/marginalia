@@ -1,8 +1,10 @@
+import { FC } from 'react';
+
 import { HashRouter, Route, Routes } from 'react-router';
 
 import { MainView } from '@ui/views/MainView';
 import { NoteView } from '@ui/views/NoteView';
-import { FC } from 'react';
+
 
 /**
  * Top-level router.
