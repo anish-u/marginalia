@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { FC, useEffect, useState } from 'react';
 
 /**
  * The note editor shown in a note window (loaded at the `#note` route).
@@ -8,11 +8,11 @@ import * as React from 'react';
  * preload bridge later. The window title mirrors the note title so multiple
  * open notes are distinguishable in the OS window list.
  */
-export const NoteView: React.FC = () => {
-  const [title, setTitle] = React.useState('');
-  const [body, setBody] = React.useState('');
+export const NoteView: FC = () => {
+  const [title, setTitle] = useState('');
+  const [body, setBody] = useState('');
 
-  React.useEffect(() => {
+  useEffect(() => {
     document.title = title.trim() === '' ? 'New Note' : title;
   }, [title]);
 

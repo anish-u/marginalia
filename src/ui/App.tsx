@@ -1,8 +1,8 @@
-import * as React from 'react';
 import { HashRouter, Route, Routes } from 'react-router';
 
 import { MainView } from '@ui/views/MainView';
 import { NoteView } from '@ui/views/NoteView';
+import { FC } from 'react';
 
 /**
  * Top-level router.
@@ -15,7 +15,7 @@ import { NoteView } from '@ui/views/NoteView';
  * renderer from a `file://`/dev-server URL where path-based history routing
  * breaks on reload. Hash routing keeps navigation entirely client-side.
  */
-export const App: React.FC = () => (
+export const App: FC = () => (
   <HashRouter>
     <Routes>
       <Route path="/" element={<MainView />} />

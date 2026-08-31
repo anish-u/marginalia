@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { FC, useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 
@@ -9,10 +9,10 @@ import { Button } from '@/components/ui/button';
  * (via the preload bridge) to spawn a fresh note window; each click opens a new
  * one. App metadata like the version lives here too.
  */
-export const MainView: React.FC = () => {
-  const [version, setVersion] = React.useState<string>('…');
+export const MainView: FC = () => {
+  const [version, setVersion] = useState<string>('…');
 
-  React.useEffect(() => {
+  useEffect(() => {
     window.marginalia
       .getAppVersion()
       .then(setVersion)
