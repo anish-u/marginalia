@@ -49,9 +49,14 @@ export const ANNOTATOR_SOURCE = `(() => {
     if (document.getElementById('marginalia-style')) return;
     const style = document.createElement('style');
     style.id = 'marginalia-style';
+    // Marginalia Green (#C2F9BB → 194,249,187) for the resting highlight, so a
+    // clip reads like a handwritten annotation on the page. The flash uses the
+    // brand Deep Green (#294B32 → 41,75,50) so "jump to clip" pulses on-brand
+    // and stays distinct from the resting tint. Colors are hard-coded here (not
+    // CSS vars) because this string runs inside the arbitrary guest document.
     style.textContent =
-      '::highlight(' + HIGHLIGHT_NAME + '){background-color:rgba(250,204,21,.4);color:inherit;}' +
-      '::highlight(' + FLASH_NAME + '){background-color:rgba(59,130,246,.55);color:inherit;}';
+      '::highlight(' + HIGHLIGHT_NAME + '){background-color:rgba(194,249,187,.55);color:inherit;}' +
+      '::highlight(' + FLASH_NAME + '){background-color:rgba(41,75,50,.5);color:inherit;}';
     document.head.appendChild(style);
   };
 

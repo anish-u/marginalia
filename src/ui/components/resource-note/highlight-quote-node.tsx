@@ -56,7 +56,7 @@ const HighlightQuoteComponent = (props: NodeViewProps) => {
         type="button"
         onClick={() => activate?.(id)}
         title={url ? `Jump to highlight — ${url}` : 'Jump to highlight'}
-        className="block w-full cursor-pointer rounded-sm border-l-4 border-yellow-400 bg-yellow-400/10 px-3 py-2 text-left text-sm leading-snug text-foreground/90 transition-colors hover:bg-yellow-400/20"
+        className="block w-full cursor-pointer rounded-sm border-l-4 border-marginalia bg-marginalia/10 px-3 py-2 text-left text-sm leading-snug text-foreground/90 transition-colors hover:bg-marginalia/20"
       >
         {text}
       </button>

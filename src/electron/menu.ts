@@ -1,8 +1,6 @@
 import { app, Menu } from 'electron';
 import type { MenuItemConstructorOptions } from 'electron';
 
-import { createNoteWindow } from '@main/windows';
-
 const isMac = process.platform === 'darwin';
 
 /**
@@ -10,8 +8,8 @@ const isMac = process.platform === 'darwin';
  *
  * The template follows Electron's recommended structure: a macOS-only app menu
  * comes first, then File/Edit/View/Window built from `role` presets so the OS
- * wires up the standard shortcuts and behaviours for us. App-specific items
- * (like "New Note") sit in the File menu.
+ * wires up the standard shortcuts and behaviours for us. App-specific items can
+ * sit in the File menu as the app grows.
  *
  * Call this once after `app` is ready.
  */
@@ -36,15 +34,7 @@ export const installApplicationMenu = (): void => {
       : []),
     {
       label: 'File',
-      submenu: [
-        {
-          label: 'New Note',
-          accelerator: 'CmdOrCtrl+N',
-          click: () => createNoteWindow(),
-        },
-        { type: 'separator' },
-        isMac ? { role: 'close' } : { role: 'quit' },
-      ],
+      submenu: [isMac ? { role: 'close' } : { role: 'quit' }],
     },
   ];
 

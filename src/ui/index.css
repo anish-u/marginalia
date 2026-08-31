@@ -27,63 +27,103 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  /* Marginalia Green as a first-class utility color (bg-marginalia,
+     text-marginalia, border-marginalia) for annotation/highlight accents. */
+  --color-marginalia: var(--marginalia-green);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/*
+ * Marginalia palette.
+ *
+ * The design is dark-first: the app should read like a physical notebook seen
+ * at night. Marginalia Green (#C2F9BB) is used sparingly — as the "ink" of a
+ * handwritten annotation (primary/ring, highlight accents) — never as a blanket
+ * fill for every interactive surface. Deep Green (#294B32) carries the solid
+ * button fill in light mode. Values are the brand hex codes converted to oklch
+ * (Tailwind v4's working color space); the source hex is noted alongside each.
+ */
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+
+  --background: oklch(0.972 0.007 106.4); /* #FAF9F4 Paper */
+  --foreground: oklch(0.28 0.008 152.5); /* #202522 Ink */
+
+  /* Notes / highlight surface doubles as the card background. */
+  --card: oklch(0.965 0.036 133.6); /* #E8F9D8 */
+  --card-foreground: oklch(0.28 0.008 152.5); /* #202522 */
+  --popover: oklch(0.972 0.007 106.4); /* #FAF9F4 */
+  --popover-foreground: oklch(0.28 0.008 152.5); /* #202522 */
+
+  /* Buttons: solid Deep Green with white text. */
+  --primary: oklch(0.373 0.066 151.9); /* #294B32 */
+  --primary-foreground: oklch(1 0 0); /* #FFFFFF */
+
+  /* Sidebar tone. */
+  --secondary: oklch(0.949 0.008 106.4); /* #F0EFE7 */
+  --secondary-foreground: oklch(0.28 0.008 152.5); /* #202522 */
+
+  --muted: oklch(0.949 0.008 106.4); /* #F0EFE7 */
+  --muted-foreground: oklch(0.548 0.006 152.5); /* #737871 */
+
+  /* Active item / annotation accent: Marginalia Green. */
+  --accent: oklch(0.925 0.089 141.3); /* #C2F9BB */
+  --accent-foreground: oklch(0.373 0.066 151.9); /* #294B32 */
+
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
+  --border: oklch(0.891 0.007 145.6); /* #DDE1D9 */
+  --input: oklch(0.891 0.007 145.6); /* #DDE1D9 */
+  --ring: oklch(0.925 0.089 141.3); /* #C2F9BB */
+
+  /* Marginalia Green (#C2F9BB) — the annotation ink used to paint clips. */
+  --marginalia-green: oklch(0.925 0.089 141.3);
+
+  --chart-1: oklch(0.373 0.066 151.9);
+  --chart-2: oklch(0.66 0.11 148);
+  --chart-3: oklch(0.78 0.13 142);
+  --chart-4: oklch(0.925 0.089 141.3);
+  --chart-5: oklch(0.548 0.006 152.5);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: oklch(0.198 0.012 152.5); /* #151A16 */
+  --foreground: oklch(0.933 0.012 137.8); /* #E9EEE7 Text */
+
+  /* Surface / card: raised panels above the background. */
+  --card: oklch(0.244 0.013 152.5); /* #1D241E Surface */
+  --card-foreground: oklch(0.933 0.012 137.8); /* #E9EEE7 */
+  --popover: oklch(0.244 0.013 152.5); /* #1D241E */
+  --popover-foreground: oklch(0.933 0.012 137.8); /* #E9EEE7 */
+
+  /* On dark, Marginalia Green is the primary — green as ink on a dark page. */
+  --primary: oklch(0.925 0.089 141.3); /* #C2F9BB */
+  --primary-foreground: oklch(0.198 0.012 152.5); /* #151A16 */
+
+  --secondary: oklch(0.244 0.013 152.5); /* #1D241E */
+  --secondary-foreground: oklch(0.933 0.012 137.8); /* #E9EEE7 */
+
+  --muted: oklch(0.244 0.013 152.5); /* #1D241E */
+  --muted-foreground: oklch(0.667 0.012 145.6); /* #9AA39A */
+
+  /* Accent uses the Deep/Secondary Green so green still varies in weight. */
+  --accent: oklch(0.244 0.013 152.5); /* #1D241E */
+  --accent-foreground: oklch(0.78 0.104 143.5); /* #8FCB89 */
+
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
+  --border: oklch(0.324 0.013 152.5); /* #303930 */
+  --input: oklch(0.324 0.013 152.5); /* #303930 */
+  --ring: oklch(0.925 0.089 141.3); /* #C2F9BB */
+
+  --marginalia-green: oklch(0.925 0.089 141.3);
+
+  --chart-1: oklch(0.925 0.089 141.3);
+  --chart-2: oklch(0.78 0.104 143.5);
+  --chart-3: oklch(0.66 0.09 145);
+  --chart-4: oklch(0.373 0.066 151.9);
+  --chart-5: oklch(0.667 0.012 145.6);
 }
 
 @layer base {

@@ -1,7 +1,8 @@
-import { FC, useCallback, useEffect, useRef, useState } from 'react';
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { ChevronDown, ChevronUp, Highlighter, X } from 'lucide-react';
+import { FileText, Globe, Highlighter } from 'lucide-react';
 import { useSearchParams } from 'react-router';
+import type { PanelImperativeHandle } from 'react-resizable-panels';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -9,13 +10,17 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable';
-import { NoteEditor, type NoteEditorHandle } from '@ui/components/NoteEditor';
-import { ANNOTATOR_SOURCE } from '@ui/lib/annotator';
-import type { WebviewElement } from '@ui/global';
-import type { ClipResult, Highlight } from '@shared/highlight';
+import { CollapsedRail } from '@ui/components/resource-note/CollapsedRail';
+import { HighlightsIndex } from '@ui/components/resource-note/HighlightsIndex';
+import { NoteEditor, type NoteEditorHandle } from '@ui/components/resource-note/NoteEditor';
+import { useAnnotator } from '@ui/hooks/use-annotator';
+import type { Highlight } from '@shared/highlight';
 
 /** Fallback site loaded when no `?url=` is supplied. */
 const DEFAULT_URL = 'https://www.medium.com';
+
+/** Below this width (% of the group) a pane snaps shut to its collapsed rail. */
+const MIN_PANE_SIZE = '20%';
 
 const makeId = (): string =>
   `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -26,91 +31,55 @@ const makeId = (): string =>
  *
  * Highlights: the user selects text in the webview and clips it. Each clip is
  * (1) stored as a text-quote anchor (see `@shared/highlight`) and re-painted
- * onto the page via the CSS Custom Highlight API (anchoring/painting runs in
- * the guest page — see `@ui/lib/annotator`), and (2) inserted into the note as
- * a clickable `highlightQuote` block (see `NoteEditor`) at the cursor, so the
- * user can write a paragraph, drop in a clip, then keep writing below it.
- * Clicking a clip in the note scrolls the webview back to it. State is
- * in-memory for now — persistence comes with note saving.
+ * onto the page via the CSS Custom Highlight API (the webview glue lives in the
+ * `useAnnotator` hook; anchoring/painting itself runs in the guest page — see
+ * `@ui/lib/annotator`), and (2) inserted into the note as a clickable
+ * `highlightQuote` block (see `NoteEditor`) at the cursor, so the user can write
+ * a paragraph, drop in a clip, then keep writing below it. Clicking a clip in
+ * the note scrolls the webview back to it. State is in-memory for now —
+ * persistence comes with note saving.
  */
 export const ResourceNoteView: FC = () => {
   const [params] = useSearchParams();
   const url = params.get('url') ?? DEFAULT_URL;
 
-  const webviewRef = useRef<WebviewElement | null>(null);
+  // Webview ↔ guest-annotator glue: inject, paint, scroll, clip, ready state.
+  const { webviewRef, ready, paint, scrollTo, clip: clipSelection } =
+    useAnnotator();
   const editorRef = useRef<NoteEditorHandle | null>(null);
-  const [ready, setReady] = useState(false);
 
   const [dragging, setDragging] = useState(false);
   const [title, setTitle] = useState('');
   const [highlights, setHighlights] = useState<Highlight[]>([]);
-  const [highlightsExpanded, setHighlightsExpanded] = useState(false);
+
+  // Collapse handling: each pane is collapsible, and when a pane collapses we
+  // swap its content for a thin rail. We hold imperative refs to expand a pane
+  // back when its rail is clicked.
+  const browserPanelRef = useRef<PanelImperativeHandle | null>(null);
+  const notePanelRef = useRef<PanelImperativeHandle | null>(null);
+  const [browserCollapsed, setBrowserCollapsed] = useState(false);
+  const [noteCollapsed, setNoteCollapsed] = useState(false);
+
+  // Label the browser rail with the site's hostname; fall back to "Resource".
+  const siteLabel = useMemo(() => {
+    try {
+      return new URL(url).hostname.replace(/^www\./, '');
+    } catch {
+      return 'Resource';
+    }
+  }, [url]);
 
   useEffect(() => {
     document.title = title.trim() === '' ? 'Resource Note' : title;
   }, [title]);
 
-  // Inject the annotator into the guest page every time it (re)loads. `ready`
-  // gates the Clip button and drives the initial paint.
-  useEffect(() => {
-    const webview = webviewRef.current;
-    if (!webview) return;
-
-    const onDomReady = () => {
-      webview
-        .executeJavaScript(ANNOTATOR_SOURCE)
-        .then(() => setReady(true))
-        .catch(() => setReady(false));
-    };
-
-    // `dom-ready` isn't in the DOM event map; the webview is still an
-    // EventTarget so addEventListener works at runtime.
-    webview.addEventListener('dom-ready', onDomReady as EventListener);
-    return () => {
-      webview.removeEventListener('dom-ready', onDomReady as EventListener);
-    };
-  }, []);
-
   // Re-paint whenever the highlight set changes (or the page becomes ready).
-  const paint = useCallback((list: Highlight[]) => {
-    const webview = webviewRef.current;
-    if (!webview) return;
-    webview
-      .executeJavaScript(
-        `window.__marginalia && window.__marginalia.paint(${JSON.stringify(list)})`,
-      )
-      .catch(() => {
-        /* guest not ready yet; next dom-ready will repaint */
-      });
-  }, []);
-
   useEffect(() => {
     if (ready) paint(highlights);
   }, [ready, highlights, paint]);
 
-  const scrollToHighlight = useCallback((id: string) => {
-    const webview = webviewRef.current;
-    if (!webview) return;
-    webview
-      .executeJavaScript(
-        `window.__marginalia && window.__marginalia.scrollTo(${JSON.stringify(id)})`,
-      )
-      .catch(() => {
-        /* ignore */
-      });
-  }, []);
-
   const clip = useCallback(async () => {
-    const webview = webviewRef.current;
-    if (!webview) return;
-    let result: ClipResult = null;
-    try {
-      result = (await webview.executeJavaScript(
-        'window.__marginalia && window.__marginalia.clip()',
-      )) as ClipResult;
-    } catch {
-      return;
-    }
+    const result = await clipSelection();
     if (!result) return;
 
     const highlight: Highlight = {
@@ -126,6 +95,19 @@ export const ResourceNoteView: FC = () => {
       text: highlight.text,
       url: highlight.url,
     });
+  }, [clipSelection]);
+
+  // Always clear the drag overlay when the pointer is released, even if no
+  // layout change fired (e.g. the user pressed the separator without moving).
+  // Otherwise the transparent overlay could stay up and block the webview.
+  useEffect(() => {
+    const clear = () => setDragging(false);
+    window.addEventListener('pointerup', clear);
+    window.addEventListener('pointercancel', clear);
+    return () => {
+      window.removeEventListener('pointerup', clear);
+      window.removeEventListener('pointercancel', clear);
+    };
   }, []);
 
   // Cmd/Ctrl+Shift+H clips the current selection.
@@ -162,112 +144,118 @@ export const ResourceNoteView: FC = () => {
   }, []);
 
   return (
-    <ResizablePanelGroup
-      orientation="horizontal"
-      className="h-full w-full"
-      onLayoutChange={() => setDragging(true)}
-      onLayoutChanged={() => {
-        window.setTimeout(() => setDragging(false), 0);
-      }}
-    >
-      {/* Browser pane */}
-      <ResizablePanel defaultSize="55%" minSize="30%">
-        <div className="relative h-full w-full">
-          <webview
-            ref={webviewRef as React.Ref<HTMLElement>}
-            src={url}
-            className="h-full w-full"
-          />
-          {dragging && <div className="absolute inset-0 cursor-col-resize" />}
-        </div>
-      </ResizablePanel>
+    <div className="flex h-full w-full">
+      {/* Left rail: shown when the browser pane is collapsed. */}
+      {browserCollapsed && (
+        <CollapsedRail
+          label={siteLabel}
+          icon={<Globe className="size-4" />}
+          side="left"
+          onExpand={() => browserPanelRef.current?.expand()}
+        />
+      )}
 
-      <ResizableHandle withHandle />
-
-      {/* Note pane: title → notes → highlights (bottom, collapsible). */}
-      <ResizablePanel defaultSize="45%" minSize="20%">
-        <main className="flex h-full flex-col">
-          {/* Title + clip action */}
-          <div className="flex items-center gap-2 px-5 pt-5 pb-2">
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Title"
-              className="min-w-0 flex-1 border-0 bg-transparent text-2xl font-semibold tracking-tight outline-none placeholder:text-muted-foreground"
+      <ResizablePanelGroup
+        orientation="horizontal"
+        className="h-full min-w-0 flex-1"
+        // Cover the <webview> the instant a drag starts on the separator —
+        // before react-resizable-panels calls setPointerCapture. The webview is
+        // an out-of-process frame that intercepts the pointer stream on the host
+        // document; if the pointer reaches it mid-drag, setPointerCapture throws
+        // InvalidStateError. The `dragging` overlay (below) keeps the pointer on
+        // the host document for the whole drag. Capture phase so we run first.
+        onPointerDownCapture={(e) => {
+          if ((e.target as HTMLElement)?.closest('[data-separator]')) {
+            setDragging(true);
+          }
+        }}
+        onLayoutChange={() => setDragging(true)}
+        onLayoutChanged={() => {
+          window.setTimeout(() => setDragging(false), 0);
+        }}
+      >
+        {/* Browser pane. Collapses to a rail when dragged below MIN_PANE_SIZE. */}
+        <ResizablePanel
+          panelRef={browserPanelRef}
+          defaultSize="55%"
+          minSize={MIN_PANE_SIZE}
+          collapsible
+          collapsedSize="0%"
+          onResize={(size) => setBrowserCollapsed(size.asPercentage === 0)}
+        >
+          <div className="relative h-full w-full">
+            <webview
+              ref={webviewRef as React.Ref<HTMLElement>}
+              src={url}
+              className="h-full w-full"
             />
-            <Button
-              size="sm"
-              variant="secondary"
-              disabled={!ready}
-              onClick={() => void clip()}
-              title="Clip selection (⌘⇧H)"
-            >
-              <Highlighter />
-              Clip
-            </Button>
+            {dragging && <div className="absolute inset-0 cursor-col-resize" />}
           </div>
+        </ResizablePanel>
 
-          {/* Notes editor — fills the space between title and highlights. */}
-          <div className="flex min-h-0 flex-1 flex-col px-5">
-            <NoteEditor
-              ref={editorRef}
-              onActivateHighlight={scrollToHighlight}
-              onHighlightIdsChange={handleHighlightIdsChange}
-            />
-          </div>
+        {/* Hide the drag handle when either side is fully collapsed — the rail
+            owns re-expansion at that point. */}
+        {!browserCollapsed && !noteCollapsed && <ResizableHandle withHandle />}
 
-          {/* Highlights — pinned to the bottom, collapsed by default. */}
-          {highlights.length > 0 && (
-            <section className="shrink-0 border-t">
-              <button
-                type="button"
-                onClick={() => setHighlightsExpanded((v) => !v)}
-                className="flex w-full items-center justify-between px-5 py-2 text-xs font-medium text-muted-foreground hover:text-foreground"
-                aria-expanded={highlightsExpanded}
+        {/* Note pane: title → notes → highlights (bottom, collapsible). */}
+        <ResizablePanel
+          panelRef={notePanelRef}
+          defaultSize="45%"
+          minSize={MIN_PANE_SIZE}
+          collapsible
+          collapsedSize="0%"
+          onResize={(size) => setNoteCollapsed(size.asPercentage === 0)}
+        >
+          <main className="flex h-full flex-col">
+            {/* Title + clip action */}
+            <div className="flex items-center gap-2 px-5 pt-5 pb-2">
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Title"
+                className="min-w-0 flex-1 border-0 bg-transparent text-2xl font-semibold tracking-tight outline-none placeholder:text-muted-foreground"
+              />
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={!ready}
+                onClick={() => void clip()}
+                title="Clip selection (⌘⇧H)"
+                className="bg-accent text-accent-foreground hover:bg-accent/80"
               >
-                <span>
-                  {highlights.length} highlight
-                  {highlights.length === 1 ? '' : 's'}
-                </span>
-                {highlightsExpanded ? (
-                  <ChevronDown className="size-4" />
-                ) : (
-                  <ChevronUp className="size-4" />
-                )}
-              </button>
+                <Highlighter />
+                Clip
+              </Button>
+            </div>
 
-              {highlightsExpanded && (
-                <ul className="max-h-56 overflow-auto border-t">
-                  {highlights.map((h) => (
-                    <li
-                      key={h.id}
-                      className="group flex items-start gap-2 border-b px-5 py-2 last:border-b-0"
-                    >
-                      <button
-                        type="button"
-                        onClick={() => scrollToHighlight(h.id)}
-                        className="flex-1 truncate border-l-2 border-yellow-400 pl-2 text-left text-sm leading-snug text-muted-foreground hover:text-foreground"
-                        title="Jump to highlight"
-                      >
-                        {h.text}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => removeHighlight(h.id)}
-                        className="mt-0.5 rounded p-0.5 text-muted-foreground opacity-0 transition-opacity hover:bg-accent group-hover:opacity-100"
-                        title="Remove highlight"
-                        aria-label="Remove highlight"
-                      >
-                        <X className="size-3.5" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          )}
-        </main>
-      </ResizablePanel>
-    </ResizablePanelGroup>
+            {/* Notes editor — fills the space between title and highlights. */}
+            <div className="flex min-h-0 flex-1 flex-col px-5">
+              <NoteEditor
+                ref={editorRef}
+                onActivateHighlight={scrollTo}
+                onHighlightIdsChange={handleHighlightIdsChange}
+              />
+            </div>
+
+            {/* Highlights index — pinned to the bottom, collapsed by default. */}
+            <HighlightsIndex
+              highlights={highlights}
+              onActivate={scrollTo}
+              onRemove={removeHighlight}
+            />
+          </main>
+        </ResizablePanel>
+      </ResizablePanelGroup>
+
+      {/* Right rail: shown when the note pane is collapsed. */}
+      {noteCollapsed && (
+        <CollapsedRail
+          label="Note"
+          icon={<FileText className="size-4" />}
+          side="right"
+          onExpand={() => notePanelRef.current?.expand()}
+        />
+      )}
+    </div>
   );
 };

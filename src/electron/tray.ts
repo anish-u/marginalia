@@ -1,7 +1,7 @@
 import { app, BrowserWindow, Menu, nativeImage, Tray } from 'electron';
 import type { NativeImage } from 'electron';
 
-import { createMainWindow, createNoteWindow } from '@main/windows';
+import { createMainWindow } from '@main/windows';
 
 let tray: Tray | null = null;
 
@@ -59,10 +59,6 @@ export const createTray = (): Tray => {
     {
       label: 'Show Window',
       click: () => showMainWindow(),
-    },
-    {
-      label: 'New Note',
-      click: () => createNoteWindow(),
     },
     { type: 'separator' },
     { role: 'quit' },

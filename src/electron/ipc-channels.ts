@@ -4,6 +4,9 @@
  */
 export enum IpcChannels {
   GetAppVersion = 'app:get-version',
-  OpenNoteWindow = 'window:open-note',
   OpenResourceNoteWindow = 'window:open-resource-note',
+  /** Renderer → main: a window asks to broadcast a theme change. */
+  SetTheme = 'theme:set',
+  /** Main → renderer: pushed to every window when the theme changes. */
+  ThemeChanged = 'theme:changed',
 }
