@@ -9,6 +9,7 @@ import {
 } from 'react';
 
 import { EditorContent, useEditor, type Editor } from '@tiptap/react';
+import type { JSONContent } from '@tiptap/core';
 import { StarterKit } from '@tiptap/starter-kit';
 
 import { FormattingMenu } from '@ui/components/resource-note/FormattingMenu';
@@ -26,6 +27,15 @@ export interface NoteEditorHandle {
   removeHighlight: (id: string) => void;
   /** Move focus into the editor. */
   focus: () => void;
+  /**
+   * Replace the whole document with the given Tiptap JSON. Used to hydrate the
+   * editor when loading an existing note. Passing `false` for `emitUpdate`
+   * avoids firing `onUpdate` for the programmatic load (so it isn't mistaken
+   * for a user edit that would trigger autosave).
+   */
+  setContent: (content: JSONContent, emitUpdate?: boolean) => void;
+  /** Current document as Tiptap JSON, for serialization (docToMarkdown). */
+  getJSON: () => JSONContent | null;
 }
 
 interface NoteEditorProps {
@@ -37,6 +47,12 @@ interface NoteEditorProps {
    * in the note so the parent can prune removed highlights and re-paint.
    */
   onHighlightIdsChange?: (ids: string[]) => void;
+  /**
+   * Called on every editor document change (Tiptap's `onUpdate`). The parent
+   * uses this to mark the note dirty and schedule a debounced autosave. Not
+   * fired for programmatic hydration via `setContent(content, false)`.
+   */
+  onUpdate?: () => void;
 }
 
 /** Collect the ids of every highlight-quote block currently in the document. */
@@ -60,7 +76,7 @@ const collectHighlightIds = (editor: Editor): string[] => {
  * `onActivateHighlight` so it can scroll the webview.
  */
 export const NoteEditor = forwardRef(function NoteEditor(
-  { onActivateHighlight, onHighlightIdsChange }: NoteEditorProps,
+  { onActivateHighlight, onHighlightIdsChange, onUpdate }: NoteEditorProps,
   ref: Ref<NoteEditorHandle>,
 ) {
   // A callback ref stored in state so the menu re-renders once the container
@@ -72,6 +88,8 @@ export const NoteEditor = forwardRef(function NoteEditor(
   // re-instantiating the editor.
   const onIdsChangeRef = useRef(onHighlightIdsChange);
   onIdsChangeRef.current = onHighlightIdsChange;
+  const onUpdateRef = useRef(onUpdate);
+  onUpdateRef.current = onUpdate;
   const lastIdsRef = useRef<string>('');
 
   const reportIds = useCallback((editor: Editor) => {
@@ -94,8 +112,13 @@ export const NoteEditor = forwardRef(function NoteEditor(
       },
     },
     // Fires on every document change — including deleting a highlight block
-    // with backspace — so the parent can prune removed highlights.
-    onUpdate: ({ editor }) => reportIds(editor),
+    // with backspace — so the parent can prune removed highlights and schedule
+    // a debounced autosave. Programmatic hydration (`setContent(c, false)`)
+    // suppresses this event so a load isn't mistaken for a user edit.
+    onUpdate: ({ editor }) => {
+      reportIds(editor);
+      onUpdateRef.current?.();
+    },
   });
 
   // Keep the click handler current on editor storage so the node view can reach
@@ -147,6 +170,16 @@ export const NoteEditor = forwardRef(function NoteEditor(
       focus: () => {
         editor?.chain().focus().run();
       },
+      setContent: (content, emitUpdate = false) => {
+        if (!editor) return;
+        // `setContent` replaces the whole document. We keep the reported-ids
+        // cache in sync so the next real edit still fires `onHighlightIdsChange`
+        // correctly, and default `emitUpdate` to false so hydration doesn't look
+        // like a user edit (which would trip autosave on load).
+        editor.commands.setContent(content, { emitUpdate });
+        lastIdsRef.current = collectHighlightIds(editor).join(',');
+      },
+      getJSON: () => editor?.getJSON() ?? null,
     }),
     [editor],
   );

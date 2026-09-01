@@ -5,7 +5,11 @@
     "composite": true,
     "module": "commonjs",
     "lib": ["ES2022"],
-    "types": ["node"],
+    /* `vitest/globals` supplies the ambient test globals (describe/it/expect/vi)
+       for co-located `*.test.ts` files, which run with `globals: true`
+       (vitest.config.ts). Test files are dev-only and excluded from the webpack
+       bundle. */
+    "types": ["node", "vitest/globals"],
     "outDir": "dist/electron",
     "paths": {
       "@main/*": ["src/electron/*"],

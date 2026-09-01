@@ -1,0 +1,227 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Repaint on every guest (re)load in `use-annotator.ts`": [
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788161399159
+      },
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788161407529
+      },
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788161462512
+      }
+    ],
+    "1.2 Test the repaint-on-reinjection behavior": [
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788161399217
+      },
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788161468272
+      },
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788161596392
+      }
+    ],
+    "2.1 Remove the focus-based broadcast (`src/electron/index.ts`)": [
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788161399260
+      },
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788161600304
+      },
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788161650097
+      }
+    ],
+    "2.2 Suppress the watcher echo for the app's own writes (`notes-watcher.ts`, `ipc/notes.ts`)": [
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788161399290
+      },
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788161653603
+      },
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788161786820
+      }
+    ],
+    "2.3 Test single-broadcast-per-action and no watcher echo": [
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788161399322
+      },
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788161791001
+      },
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788162109538
+      }
+    ],
+    "3.1 Assign the Note_Identity eagerly in `ResourceNoteView.tsx`": [
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788161399391
+      },
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788162112982
+      },
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788162217697
+      }
+    ],
+    "4.1 Symmetric reload + pending-edits gate in `ResourceNoteView.tsx`": [
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788161399431
+      },
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788162220992
+      },
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788162602483
+      }
+    ],
+    "4.2 Make the echo inert with a content-equality guard (Req 4)": [
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788161399469
+      },
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788162606237
+      },
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788162720437
+      }
+    ],
+    "4.3 Test the reload decision matrix": [
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788161399501
+      },
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788162723791
+      },
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788163282359
+      }
+    ],
+    "5.1 Strip temporary sync diagnostics": [
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788161399535
+      },
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788163285569
+      },
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788163351633
+      }
+    ],
+    "5.2 Full verification and manual smoke test": [
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788161399571
+      },
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788163354709
+      },
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788163419340
+      }
+    ],
+    "1. Fix highlights lost after browser-pane navigation (Req 5)": [
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788161596458
+      }
+    ],
+    "2. Make change broadcasts efficient and non-redundant (Req 3)": [
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788162109612
+      }
+    ],
+    "3. Give a created note a stable identity a second window can bind to (Req 1)": [
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788162217734
+      }
+    ],
+    "4. Converge windows on change without clobbering edits (Req 2, 4)": [
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788163282398
+      }
+    ],
+    "5. Remove diagnostics and verify the whole fix (Req 6)": [
+      {
+        "executionId": "7e32041e-d054-4349-8e77-2465908677f1",
+        "chatSessionId": "sess_ebb70624-ff05-44b9-b89f-10d7440da4eb",
+        "timestamp": 1788163419370
+      }
+    ]
+  }
+}

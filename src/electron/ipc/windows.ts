@@ -12,8 +12,10 @@ import { IpcChannels } from '@main/ipc-channels';
 export const registerWindowHandlers = (): void => {
   ipcMain.handle(
     IpcChannels.OpenResourceNoteWindow,
-    (_event, url?: string) => {
-      createResourceNoteWindow(url);
+    (_event, url?: string, title?: string) => {
+      // A fresh note from the launcher: seed the browser pane url and the
+      // note's initial title (both chosen in the "New Resource Note" dialog).
+      createResourceNoteWindow(url, undefined, title);
     },
   );
 };

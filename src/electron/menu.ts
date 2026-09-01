@@ -36,6 +36,68 @@ export const installApplicationMenu = (): void => {
       label: 'File',
       submenu: [isMac ? { role: 'close' } : { role: 'quit' }],
     },
+    {
+      // Edit menu — built entirely from Electron `role` presets. This is what
+      // wires the standard clipboard/undo shortcuts (⌘C/⌘V/⌘X/⌘A/⌘Z/⇧⌘Z) to the
+      // focused webContents. Without an Edit menu carrying these roles, macOS
+      // never delivers those accelerators, which is why copy/paste appeared
+      // "broken". The roles also cover the `<webview>` guest page's selection.
+      label: 'Edit',
+      submenu: [
+        { role: 'undo' },
+        { role: 'redo' },
+        { type: 'separator' },
+        { role: 'cut' },
+        { role: 'copy' },
+        { role: 'paste' },
+        ...(isMac
+          ? ([
+              { role: 'pasteAndMatchStyle' },
+              { role: 'delete' },
+              { role: 'selectAll' },
+              { type: 'separator' },
+              {
+                label: 'Speech',
+                submenu: [{ role: 'startSpeaking' }, { role: 'stopSpeaking' }],
+              },
+            ] as MenuItemConstructorOptions[])
+          : ([
+              { role: 'delete' },
+              { type: 'separator' },
+              { role: 'selectAll' },
+            ] as MenuItemConstructorOptions[])),
+      ],
+    },
+    {
+      // View menu — reload/devtools/zoom/fullscreen from role presets. Handy for
+      // development and expected by users; all standard behaviours.
+      label: 'View',
+      submenu: [
+        { role: 'reload' },
+        { role: 'forceReload' },
+        { role: 'toggleDevTools' },
+        { type: 'separator' },
+        { role: 'resetZoom' },
+        { role: 'zoomIn' },
+        { role: 'zoomOut' },
+        { type: 'separator' },
+        { role: 'togglefullscreen' },
+      ],
+    },
+    {
+      // Window menu — minimize/zoom/close, with the macOS front/window extras.
+      label: 'Window',
+      submenu: [
+        { role: 'minimize' },
+        { role: 'zoom' },
+        ...(isMac
+          ? ([
+              { type: 'separator' },
+              { role: 'front' },
+            ] as MenuItemConstructorOptions[])
+          : ([{ role: 'close' }] as MenuItemConstructorOptions[])),
+      ],
+    },
   ];
 
   const menu = Menu.buildFromTemplate(template);

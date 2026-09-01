@@ -21,5 +21,32 @@
         "project": ["tsconfig.electron.json", "tsconfig.ui.json"]
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      /* Test files (and the Vitest config/setup) use the Vitest globals
+         (`describe`, `it`, `expect`, `vi`, ...) without importing them, since
+         `globals: true` is set in vitest.config.ts. Declaring them as readonly
+         globals here (rather than pulling in a whole eslint-plugin-vitest) keeps
+         the classic .eslintrc setup lean while letting `no-undef` recognize them;
+         these files are dev-only and never ship in the packaged app. */
+      "files": ["**/*.test.ts", "**/*.test.tsx", "vitest.config.ts", "vitest.setup.ts"],
+      "env": {
+        "node": true,
+        "browser": true
+      },
+      "globals": {
+        "describe": "readonly",
+        "it": "readonly",
+        "test": "readonly",
+        "expect": "readonly",
+        "vi": "readonly",
+        "beforeAll": "readonly",
+        "afterAll": "readonly",
+        "beforeEach": "readonly",
+        "afterEach": "readonly",
+        "suite": "readonly"
+      }
+    }
+  ]
 }

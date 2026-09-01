@@ -8,7 +8,10 @@
  * `__marginalia` that the host drives:
  *
  *   __marginalia.clip()            -> ClipResult (text-quote anchor | null)
- *   __marginalia.paint(anchors)    -> re-find each anchor and highlight it
+ *   __marginalia.paint(anchors)    -> re-find each anchor and highlight it,
+ *                                     returning `{ painted: id[] }` (the ids
+ *                                     located on the page; the rest couldn't be
+ *                                     re-anchored — Req 6.6)
  *   __marginalia.scrollTo(id)      -> scroll the anchor into view and flash it
  *
  * We keep it as a single self-contained IIFE string (no imports, no bundler)
@@ -137,16 +140,24 @@ export const ANNOTATOR_SOURCE = `(() => {
     return flatRangeToDomRange(segments, idx, idx + anchor.text.length);
   };
 
-  // Rebuild the persistent highlight from all known anchors.
+  // Rebuild the persistent highlight from all known anchors. Returns the ids
+  // whose anchors were located on the current page (so the host can flag the
+  // ones that couldn't be re-anchored — see paint() / Req 6.6). When the CSS
+  // Custom Highlight API is unavailable we can't paint, so nothing is "found".
   const repaint = () => {
-    if (!('highlights' in CSS) || typeof Highlight === 'undefined') return;
+    if (!('highlights' in CSS) || typeof Highlight === 'undefined') return [];
     ensureStyles();
     const hl = new Highlight();
+    const found = [];
     for (const anchor of anchors.values()) {
       const range = rangeFor(anchor);
-      if (range) hl.add(range);
+      if (range) {
+        hl.add(range);
+        found.push(anchor.id);
+      }
     }
     CSS.highlights.set(HIGHLIGHT_NAME, hl);
+    return found;
   };
 
   window.__marginalia = {
@@ -170,8 +181,10 @@ export const ANNOTATOR_SOURCE = `(() => {
     paint(list) {
       anchors.clear();
       for (const a of list) anchors.set(a.id, a);
-      repaint();
-      return true;
+      // Return the ids that were actually located/painted so the host can mark
+      // the rest as "not found on page" (Req 6.6) without dropping them.
+      const painted = repaint();
+      return { painted };
     },
 
     scrollTo(id) {
